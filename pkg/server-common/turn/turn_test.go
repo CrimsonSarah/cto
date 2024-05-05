@@ -10,21 +10,47 @@ import (
 
 func TestTurn(t *testing.T) {
 	joguinhoteste := game.Game{
-		TurnStep: 0,
+		Players:       [2]string{"idteste1", "idteste2"},
+		TurnOwner:     "idteste1",
+		TurnStep:      0,
+		CurrentAction: 0,
 	}
-	SetUntap(&joguinhoteste)
+	SetUntapStep(&joguinhoteste)
+	SetResolvingAction(&joguinhoteste)
 	assert.Equal(t, joguinhoteste.TurnStep, Untap)
+	fmt.Print(joguinhoteste.TurnOwner)
 	fmt.Print(joguinhoteste.TurnStep)
+	fmt.Print(joguinhoteste.CurrentAction)
 
-	SetDraw(&joguinhoteste)
+	SetDrawStep(&joguinhoteste)
 	assert.Equal(t, joguinhoteste.TurnStep, Draw)
 	fmt.Print(joguinhoteste.TurnStep)
+	fmt.Print(joguinhoteste.CurrentAction)
 
-	SetBreed(&joguinhoteste)
+	SetBreedStep(&joguinhoteste)
+	SetFreeAction(&joguinhoteste)
 	assert.Equal(t, joguinhoteste.TurnStep, Breed)
 	fmt.Print(joguinhoteste.TurnStep)
+	fmt.Print(joguinhoteste.CurrentAction)
 
-	SetMain(&joguinhoteste)
+	SetMainStep(&joguinhoteste)
 	assert.Equal(t, joguinhoteste.TurnStep, Main)
 	fmt.Print(joguinhoteste.TurnStep)
+	fmt.Print(joguinhoteste.CurrentAction)
+
+	SetEndStep(&joguinhoteste)
+	SetResolvingAction(&joguinhoteste)
+	assert.Equal(t, joguinhoteste.TurnStep, End)
+	fmt.Print(joguinhoteste.TurnStep)
+	fmt.Print(joguinhoteste.CurrentAction)
+
+	ToggleTurnOwner(&joguinhoteste)
+	assert.Equal(t, joguinhoteste.TurnOwner, joguinhoteste.Players[1])
+
+	SetUntapStep(&joguinhoteste)
+	SetResolvingAction(&joguinhoteste)
+	assert.Equal(t, joguinhoteste.TurnStep, Untap)
+	fmt.Print(joguinhoteste.TurnOwner)
+	fmt.Print(joguinhoteste.TurnStep)
+	fmt.Print(joguinhoteste.CurrentAction)
 }

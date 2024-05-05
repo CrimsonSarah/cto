@@ -10,20 +10,55 @@ const (
 	Draw
 	Breed
 	Main
+	End
 )
 
-func SetUntap(game *game.Game) {
+const (
+	Selecting byte = iota + 6
+	Targeting
+	Resolving
+)
+
+func SetUntapStep(game *game.Game) {
 	game.TurnStep = Untap
 }
 
-func SetDraw(game *game.Game) {
+func SetDrawStep(game *game.Game) {
 	game.TurnStep = Draw
 }
 
-func SetBreed(game *game.Game) {
+func SetBreedStep(game *game.Game) {
 	game.TurnStep = Breed
 }
 
-func SetMain(game *game.Game) {
+func SetMainStep(game *game.Game) {
 	game.TurnStep = Main
+}
+
+func SetEndStep(game *game.Game) {
+	game.TurnStep = End
+}
+
+func SetFreeAction(game *game.Game) {
+	game.CurrentAction = Null
+}
+
+func SetSelectingAction(game *game.Game) {
+	game.CurrentAction = Selecting
+}
+
+func SetTargetingAction(game *game.Game) {
+	game.CurrentAction = Targeting
+}
+
+func SetResolvingAction(game *game.Game) {
+	game.CurrentAction = Resolving
+}
+
+func ToggleTurnOwner(game *game.Game) {
+	if game.TurnOwner == game.Players[0] {
+		game.TurnOwner = game.Players[1]
+	} else {
+		game.TurnOwner = game.Players[0]
+	}
 }
