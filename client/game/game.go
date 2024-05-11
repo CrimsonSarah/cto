@@ -8,7 +8,7 @@ import (
 	"github.com/CrimsonSarah/cto/client/game/card"
 	"github.com/CrimsonSarah/cto/client/game/render"
 	"github.com/CrimsonSarah/cto/client/game/world"
-	"github.com/CrimsonSarah/cto/client/ui/game"
+	"github.com/CrimsonSarah/cto/client/ui"
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 )
@@ -41,7 +41,7 @@ func (g *Game) Init() {
 	g.renderableCard = g.Renderer.CardRenderer.MakeRenderableCard(&placed_card)
 }
 
-func (g *Game) Tick(time game.GameTime) bool {
+func (g *Game) Tick(time ui.GameTime) bool {
 	g.renderableCard.Transform = g.renderableCard.Transform.Mul(
 		digimath.Matrix44RotateZ(math.Pi * time.Dtf),
 	)
