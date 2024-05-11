@@ -2,93 +2,123 @@ package game
 
 import (
 	"log"
-	"unsafe"
 
-	"github.com/go-gl/gl/v3.3-core/gl"
+	"github.com/CrimsonSarah/cto/client/digigl"
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 )
 
-func openGlDebug(
-	source uint32,
-	gltype uint32,
-	id uint32,
-	severity uint32,
-	length int32,
-	message string,
-	userParam unsafe.Pointer) {
-	log.Printf("[OpenGL Debug Message] source: %d, type: %d, id: %d, severity: %d, message: %s\n",
-		source, gltype, id, severity, message)
+// This package is for creating a widget on which to create a game.
+// The game itself has to be provided from somewhere else.
+
+type GameTime struct {
+	// Time in microsseconds from start.
+	Timei int64
+	// Time in seconds from start (64 bits).
+	Timed float64
+	// Time in microsseconds from last frame.
+	Dti int64
+	// Time in seconds from last frame (64 bits).
+	Dtd float64
+	// Time in seconds from last frame (32 bits).
+	Dtf float32
+	// What frame this is.
+	Frame int64
 }
 
-type InitCallback func(area *gtk.GLArea)
+type Game interface {
+	Init()
 
-func wrapOnRealize(callback InitCallback) InitCallback {
-	return func(area *gtk.GLArea) {
-		area.MakeCurrent()
+	// Return `false` if a redraw is NOT needed. Otherwise, return
+	// `true`.
+	Tick(GameTime) bool
 
-		if err := area.GetError(); err != nil {
-			log.Fatalln("Could not create make GL area current.", err)
-			return
-		}
+	Render(area *gtk.GLArea, context *gdk.GLContext)
+}
 
-		if err := gl.Init(); err != nil {
-			log.Fatalln("Could not initialize OpenGL", err)
-			return
-		}
+// Ensures that the actual Game receives convenient data to work with
+// and nothing more. An interface between GTK and ourselves.
+type GameWrapper struct {
+	Game Game
 
-		gl.Enable(gl.DEBUG_OUTPUT)
-		gl.Enable(gl.DEBUG_OUTPUT_SYNCHRONOUS)
+	StartTime         int64
+	PreviousFrameTime int64
+}
 
-		gl.DebugMessageCallback(openGlDebug, nil)
-		gl.DebugMessageControl(gl.DONT_CARE, gl.DONT_CARE, gl.DONT_CARE, 0, nil, true)
+type InitCallback func()
 
-		callback(area)
+func (w *GameWrapper) Init(area *gtk.GLArea) {
+	area.MakeCurrent()
+
+	if err := area.GetError(); err != nil {
+		log.Fatalln("Could not create make GL area current.", err)
+		return
 	}
+
+	w.StartTime = area.GetFrameClock().GetFrameTime()
+	w.PreviousFrameTime = 0
+
+	digigl.DigiGLInit()
+	w.Game.Init()
 }
 
-type RenderCallback func(area *gtk.GLArea, context *gdk.GLContext) bool
+func (w *GameWrapper) Tick(widget *gtk.Widget, frameClock *gdk.FrameClock) bool {
+	generic, _ := widget.Cast()
 
-func wrapOnRender(callback RenderCallback) RenderCallback {
-	return func(area *gtk.GLArea, context *gdk.GLContext) bool {
-		// FIXME: For some reason I don't seem to be able to move these
-		// to a function, or anywhere else really, without causing a
-		// segfault... (?)
-		gl.ClearColor(0, 0, 0, 0)
-		gl.Clear(gl.COLOR_BUFFER_BIT)
+	if area, ok := generic.(*gtk.GLArea); ok {
+		monotonicFrameTime := frameClock.GetFrameTime()
 
-		callback(area, context)
+		currentFrameTime := monotonicFrameTime - w.StartTime
+		currentFrameTimeS := float64(currentFrameTime) / 1e6
+
+		dt := currentFrameTime - w.PreviousFrameTime
+		dtS := float64(dt) / 1e6
+
+		w.PreviousFrameTime = currentFrameTime
+
+		gameTime := GameTime{
+			Timei: currentFrameTime,
+			Timed: currentFrameTimeS,
+			Dti:   dt,
+			Dtd:   dtS,
+			Dtf:   float32(dtS),
+			Frame: frameClock.GetFrameCounter(),
+		}
+
+		shouldDraw := w.Game.Tick(gameTime)
+
+		if shouldDraw {
+			area.QueueDraw()
+		}
 
 		return true
+	} else {
+		log.Fatalln("Widget passed to callback is not a GLArea..?")
+		return false
 	}
 }
 
-type TickCallback func(area *gtk.GLArea, frameClock *gdk.FrameClock) bool
-
-func wrapOnTick(callback TickCallback) gtk.TickCallback {
-	return func(widget *gtk.Widget, frameClock *gdk.FrameClock) bool {
-		generic, _ := widget.Cast()
-
-		if area, ok := generic.(*gtk.GLArea); ok {
-			return callback(area, frameClock)
-		} else {
-			log.Fatalln("Widget passed to callback is not a GLArea..?")
-			return false
-		}
-	}
+func (w *GameWrapper) Render(area *gtk.GLArea, context *gdk.GLContext) bool {
+	w.Game.Render(area, context)
+	return true
 }
 
-func GameNew(init InitCallback, tick TickCallback, render RenderCallback) *gtk.GLArea {
+// TODO: Error handling
+func GameWidgetNew(game Game) *gtk.GLArea {
 	glArea, err := gtk.GLAreaNew()
 
 	if err != nil {
 		log.Fatalln("Could not create GL area.", err)
+		return nil
 	}
 
-	glArea.SetSizeRequest(100, 100)
-	glArea.Connect("realize", wrapOnRealize(init))
-	glArea.Connect("render", wrapOnRender(render))
+	wrapper := GameWrapper{
+		Game: game,
+	}
 
-	glArea.AddTickCallback(wrapOnTick(tick))
+	glArea.Connect("realize", wrapper.Init)
+	glArea.Connect("render", wrapper.Render)
+	glArea.AddTickCallback(wrapper.Tick)
+
 	return glArea
 }

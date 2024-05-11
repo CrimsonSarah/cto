@@ -2,7 +2,7 @@ package digimath
 
 import "math"
 
-// Everything row-major
+// Everything row-major. 32-bit floats to play well with the GPU.
 
 // Vec2
 
