@@ -12,23 +12,31 @@ type Card struct {
 type Digitama struct {
 	Card
 	InheritedEffect func()
+	IsInherited     bool
 }
 
 type Digimon struct {
 	Card
+	IsInherited     bool
+	IsTapped        bool
 	InheritedEffect func()
 	Effect          func()
 	Security        func()
 	MemoryCost      byte
 	Level           byte
 	DP              int
+	EvolutionLine   []CardType
 }
 
 type Tamer struct {
 	Card
-	Effect     func()
-	Security   func()
-	MemoryCost byte
+	IsInherited     bool
+	IsTapped        bool
+	InheritedEffect func()
+	Effect          func()
+	Security        func()
+	MemoryCost      byte
+	EvolutionLine   []CardType
 }
 
 type Option struct {
@@ -39,14 +47,16 @@ type Option struct {
 }
 
 type CardType interface {
-	ReturnTrigger(trigger byte)
+	ReturnTrigger(byte)
+	Untap()
+	Tap()
 }
 
-func (dt Digitama) ReturnTrigger(trigger byte) func() {
-	return dt.InheritedEffect
+func (dt Digitama) ReturnTrigger(trigger byte) {
+	dt.InheritedEffect()
 }
 
-func (dg Digimon) ReturnTrigger(trigger byte) func() {
+func (dg Digimon) ReturnTrigger(trigger byte) {
 	const (
 		effect byte = iota
 		inheritedEffect
@@ -55,43 +65,66 @@ func (dg Digimon) ReturnTrigger(trigger byte) func() {
 
 	switch trigger {
 	case effect:
-		return dg.Effect
+		dg.Effect()
 	case inheritedEffect:
-		return dg.InheritedEffect
+		dg.InheritedEffect()
 	case security:
-		return dg.Security
+		dg.Security()
 	default:
-		return nil
 	}
 }
 
-func (t Tamer) ReturnTrigger(trigger byte) func() {
+func (t Tamer) ReturnTrigger(trigger byte) {
 	const (
 		effect byte = iota
+		inheritedEffect
 		security
 	)
 
 	switch trigger {
 	case effect:
-		return t.Effect
+		t.Effect()
+	case inheritedEffect:
+		t.InheritedEffect()
 	case security:
-		return t.Security
+		t.Security()
 	default:
-		return nil
 	}
 }
-func (o Option) ReturnTrigger(trigger byte) func() {
+
+func (o Option) ReturnTrigger(trigger byte) {
 	const (
 		effect byte = iota
+		inheritedEffect
 		security
 	)
 
 	switch trigger {
 	case effect:
-		return o.Effect
+		o.Effect()
 	case security:
-		return o.Security
+		o.Security()
 	default:
-		return nil
 	}
 }
+
+func (dg Digimon) Untap() {
+	dg.IsTapped = false
+}
+
+func (t Tamer) Untap() {
+	t.IsTapped = false
+}
+
+func (dg Digimon) Tap() {
+	dg.IsTapped = true
+}
+
+func (t Tamer) Tap() {
+	t.IsTapped = true
+}
+
+func (dt Digitama) Tap()   {}
+func (o Option) Tap()      {}
+func (dt Digitama) Untap() {}
+func (o Option) Untap()    {}

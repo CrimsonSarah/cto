@@ -1,13 +1,15 @@
 package game
 
 import (
-	stack "github.com/CrimsonSarah/cto/pkg/server-common/stack"
+	"github.com/CrimsonSarah/cto/pkg/server-common/player"
+	"github.com/CrimsonSarah/cto/pkg/server-common/stack"
 )
 
 type Game struct {
-	Players       [2]string
+	Players       [2]player.Player
 	TurnOwner     string
 	TurnStep      byte
 	CurrentAction byte
+	Memory        int
 	Stack         stack.Stack
 }

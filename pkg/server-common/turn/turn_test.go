@@ -5,16 +5,25 @@ import (
 	"testing"
 
 	game "github.com/CrimsonSarah/cto/pkg/server-common"
+	"github.com/CrimsonSarah/cto/pkg/server-common/player"
 	"github.com/stretchr/testify/assert"
 )
 
 func TestTurn(t *testing.T) {
 	joguinhoteste := game.Game{
-		Players:       [2]string{"idteste1", "idteste2"},
-		TurnOwner:     "idteste1",
+		Players: [2]player.Player{
+			{
+				ID: "idteste1",
+			},
+			{
+				ID: "idteste2",
+			},
+		},
+		TurnOwner:     "",
 		TurnStep:      0,
 		CurrentAction: 0,
 	}
+	joguinhoteste.TurnOwner = joguinhoteste.Players[0].ID
 	SetUntapStep(&joguinhoteste)
 	SetResolvingAction(&joguinhoteste)
 	assert.Equal(t, joguinhoteste.TurnStep, Untap)
@@ -45,7 +54,7 @@ func TestTurn(t *testing.T) {
 	fmt.Print(joguinhoteste.CurrentAction)
 
 	ToggleTurnOwner(&joguinhoteste)
-	assert.Equal(t, joguinhoteste.TurnOwner, joguinhoteste.Players[1])
+	assert.Equal(t, joguinhoteste.TurnOwner, joguinhoteste.Players[1].ID)
 
 	SetUntapStep(&joguinhoteste)
 	SetResolvingAction(&joguinhoteste)

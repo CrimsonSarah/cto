@@ -1,15 +1,15 @@
 package stack
 
 import (
-	card "github.com/CrimsonSarah/cto/pkg/server-common/card"
+	"github.com/CrimsonSarah/cto/pkg/server-common/card"
 )
 
 type Stack struct {
 	Triggers []card.CardType
 }
 
-func Trigger(card *card.CardType, stack *Stack) {
-	stack.Triggers = append(stack.Triggers, *card)
+func Trigger(card card.CardType, stack *Stack) {
+	stack.Triggers = append(stack.Triggers, card)
 }
 
 func Resolve(stack *Stack, triggerType byte) {
