@@ -7,19 +7,20 @@ import (
 	"unsafe"
 
 	"github.com/CrimsonSarah/cto/client/digigl"
+	"github.com/CrimsonSarah/cto/client/digimath"
 	"github.com/CrimsonSarah/cto/client/game/card"
 	"github.com/CrimsonSarah/cto/client/game/world"
 	"github.com/CrimsonSarah/cto/client/resources"
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
-type RenderData struct {
+type CardRenderData struct {
 	TextureId uint32
 }
 
 type RenderableCard struct {
 	*world.Placed[card.Card]
-	Render RenderData
+	Render CardRenderData
 }
 
 type Vertex struct {
@@ -43,14 +44,20 @@ var indexBuffer = [6]uint32{
 }
 
 type CardRenderer struct {
-	VertexArrayId            uint32
-	ProgramId                uint32
-	TransformUniformLocation int32
+	Projection *digimath.Matrix44
+
+	VertexArrayId uint32
+	ProgramId     uint32
+
+	ProjectionUniformLocation int32
+	TransformUniformLocation  int32
 
 	CardTextures map[string]uint32
 }
 
-func (r *CardRenderer) Init() {
+func (r *CardRenderer) Init(projection *digimath.Matrix44) {
+	r.Projection = projection
+
 	// Setup vertex and index buffers
 	log.Println("Initialiazing cards")
 
@@ -104,17 +111,24 @@ func (r *CardRenderer) Init() {
 
 	r.attachShader(
 		gl.VERTEX_SHADER,
-		"data/shaders/cards/vert.glsl",
+		"resources/shaders/cards/vert.glsl",
 	)
 
 	r.attachShader(
 		gl.FRAGMENT_SHADER,
-		"data/shaders/cards/frag.glsl",
+		"resources/shaders/cards/frag.glsl",
 	)
 
 	gl.LinkProgram(r.ProgramId)
 	gl.ValidateProgram(r.ProgramId)
 	gl.UseProgram(r.ProgramId)
+
+	r.ProjectionUniformLocation = gl.GetUniformLocation(
+		r.ProgramId,
+		gl.Str("u_Projection\000"),
+	)
+
+	gl.UniformMatrix4fv(r.ProjectionUniformLocation, 1, false, &projection[0])
 
 	r.TransformUniformLocation = gl.GetUniformLocation(
 		r.ProgramId,
@@ -123,6 +137,11 @@ func (r *CardRenderer) Init() {
 
 	// Filled on demand
 	r.CardTextures = make(map[string]uint32)
+}
+
+func (r *CardRenderer) Configure(projection *digimath.Matrix44) {
+	gl.UseProgram(r.ProgramId)
+	gl.UniformMatrix4fv(r.ProjectionUniformLocation, 1, false, &projection[0])
 }
 
 func (r *CardRenderer) attachShader(
@@ -149,7 +168,7 @@ func (r *CardRenderer) attachShader(
 
 func (r *CardRenderer) loadTexture(code string) *image.RGBA {
 	data, err := resources.ReadTexture(
-		resources.ResPath(fmt.Sprintf("data/textures/cards/%s.jpg", code)))
+		resources.ResPath(fmt.Sprintf("resources/textures/cards/%s.jpg", code)))
 
 	if err != nil {
 		log.Fatalln("Could not load texture for card", code, "", err)
@@ -191,7 +210,7 @@ func (r *CardRenderer) MakeRenderableCard(card *world.Placed[card.Card]) Rendera
 
 	result := RenderableCard{
 		Placed: card,
-		Render: RenderData{
+		Render: CardRenderData{
 			TextureId: textureId,
 		},
 	}
@@ -206,7 +225,12 @@ func (r *CardRenderer) RenderCard(c *RenderableCard) {
 	gl.ActiveTexture(digigl.SpriteTextureUnit)
 	gl.BindTexture(gl.TEXTURE_2D, c.Render.TextureId)
 
-	gl.UniformMatrix4fv(r.TransformUniformLocation, 1, false, &c.Transform[0])
+	gl.UniformMatrix4fv(
+		r.TransformUniformLocation,
+		1,
+		false,
+		&c.Transform.Matrix44[0],
+	)
 
 	gl.DrawElements(
 		gl.TRIANGLES,

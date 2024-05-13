@@ -20,6 +20,10 @@ func (v Vec2) Y() float32 {
 	return v[1]
 }
 
+func (v Vec2) Scale(amount float32) Vec2 {
+	return MakeVec2(v.X()*amount, v.Y()*amount)
+}
+
 // Vec3
 
 type Vec3 [3]float32
@@ -38,6 +42,10 @@ func (v Vec3) Y() float32 {
 
 func (v Vec3) Z() float32 {
 	return v[2]
+}
+
+func (v Vec3) Scale(amount float32) Vec3 {
+	return MakeVec3(v.X()*amount, v.Y()*amount, v.Z()*amount)
 }
 
 // Matrix33
@@ -100,6 +108,15 @@ func (m Matrix44) Mul(other Matrix44) Matrix44 {
 		me(1, 0), me(1, 1), me(1, 2), me(1, 3),
 		me(2, 0), me(2, 1), me(2, 2), me(2, 3),
 		me(3, 0), me(2, 1), me(3, 2), me(3, 3),
+	)
+}
+
+func (m Matrix44) Transpose() Matrix44 {
+	return MakeMatrix44(
+		m.Entry(0, 0), m.Entry(1, 0), m.Entry(2, 0), m.Entry(3, 0),
+		m.Entry(0, 1), m.Entry(1, 1), m.Entry(2, 1), m.Entry(3, 1),
+		m.Entry(0, 2), m.Entry(1, 2), m.Entry(2, 2), m.Entry(3, 2),
+		m.Entry(0, 3), m.Entry(1, 3), m.Entry(2, 3), m.Entry(3, 3),
 	)
 }
 

@@ -6,6 +6,7 @@ import (
 
 	"github.com/CrimsonSarah/cto/client/game"
 	"github.com/CrimsonSarah/cto/client/ui"
+	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 )
@@ -50,6 +51,11 @@ func onActivate(application *gtk.Application) {
 
 	game := game.MakeGame()
 	gameWidget := ui.GameWidgetNew(&game)
+
+	appWindow.Connect("configure-event", func(window *gtk.ApplicationWindow, event *gdk.Event) {
+		eventConfigure := gdk.EventConfigureNewFromEvent(event)
+		game.Configure(eventConfigure.Width(), eventConfigure.Height())
+	})
 
 	appWindow.Add(gameWidget)
 	appWindow.ShowAll()

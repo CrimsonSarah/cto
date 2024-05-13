@@ -3,6 +3,7 @@ package ui
 import (
 	"log"
 
+	"github.com/CrimsonSarah/cto/client/digidata"
 	"github.com/CrimsonSarah/cto/client/digigl"
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
@@ -11,7 +12,7 @@ import (
 // This package is for creating a widget on which to create a game.
 // The game itself has to be provided from somewhere else.
 
-type GameTime struct {
+type FrameContext struct {
 	// Time in microsseconds from start.
 	Timei int64
 	// Time in seconds from start (64 bits).
@@ -24,14 +25,25 @@ type GameTime struct {
 	Dtf float32
 	// What frame this is.
 	Frame int64
+
+	// See https://docs.gtk.org/gtk3/input-handling.html
+	// Use type assertions to determine the event type. They will be
+	// pointers!
+	// Feel compelled to remove events once they are handled.
+	Events *digidata.Queue[interface{}]
+}
+
+type InitContext struct {
+	Width  int
+	Height int
 }
 
 type Game interface {
-	Init()
+	Init(InitContext)
 
 	// Return `false` if a redraw is NOT needed. Otherwise, return
 	// `true`.
-	Tick(GameTime) bool
+	Tick(FrameContext) bool
 
 	Render(area *gtk.GLArea, context *gdk.GLContext)
 }
@@ -43,9 +55,12 @@ type GameWrapper struct {
 
 	StartTime         int64
 	PreviousFrameTime int64
-}
 
-type InitCallback func()
+	// Not sure if there is the need to do this manually. Stores events
+	// to make sure they are processed deterministically every frame.
+	// Use type assertions to determine the event type.
+	EventQueue digidata.Queue[interface{}]
+}
 
 func (w *GameWrapper) Init(area *gtk.GLArea) {
 	area.MakeCurrent()
@@ -59,7 +74,13 @@ func (w *GameWrapper) Init(area *gtk.GLArea) {
 	w.PreviousFrameTime = 0
 
 	digigl.DigiGLInit()
-	w.Game.Init()
+
+	context := InitContext{
+		Width:  area.GetAllocatedWidth(),
+		Height: area.GetAllocatedHeight(),
+	}
+
+	w.Game.Init(context)
 }
 
 func (w *GameWrapper) Tick(widget *gtk.Widget, frameClock *gdk.FrameClock) bool {
@@ -76,16 +97,17 @@ func (w *GameWrapper) Tick(widget *gtk.Widget, frameClock *gdk.FrameClock) bool 
 
 		w.PreviousFrameTime = currentFrameTime
 
-		gameTime := GameTime{
-			Timei: currentFrameTime,
-			Timed: currentFrameTimeS,
-			Dti:   dt,
-			Dtd:   dtS,
-			Dtf:   float32(dtS),
-			Frame: frameClock.GetFrameCounter(),
+		frame := FrameContext{
+			Timei:  currentFrameTime,
+			Timed:  currentFrameTimeS,
+			Dti:    dt,
+			Dtd:    dtS,
+			Dtf:    float32(dtS),
+			Frame:  frameClock.GetFrameCounter(),
+			Events: &w.EventQueue,
 		}
 
-		shouldDraw := w.Game.Tick(gameTime)
+		shouldDraw := w.Game.Tick(frame)
 
 		if shouldDraw {
 			area.QueueDraw()
@@ -119,6 +141,19 @@ func GameWidgetNew(game Game) *gtk.GLArea {
 	glArea.Connect("realize", wrapper.Init)
 	glArea.Connect("render", wrapper.Render)
 	glArea.AddTickCallback(wrapper.Tick)
+
+	glArea.AddEvents(int(gdk.BUTTON_PRESS_MASK | gdk.KEY_PRESS_MASK))
+
+	glArea.Connect("button-press-event", func(area *gtk.GLArea, event *gdk.Event) {
+		buttonEvent := gdk.EventButtonNewFromEvent(event)
+		wrapper.EventQueue.Enqueue(buttonEvent)
+	})
+
+	glArea.SetCanFocus(true)
+	glArea.Connect("key-press-event", func(area *gtk.GLArea, event *gdk.Event) {
+		keyEvent := gdk.EventKeyNewFromEvent(event)
+		wrapper.EventQueue.Enqueue(keyEvent)
+	})
 
 	return glArea
 }

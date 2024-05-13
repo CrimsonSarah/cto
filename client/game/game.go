@@ -4,7 +4,6 @@ import (
 	"log"
 	"math"
 
-	"github.com/CrimsonSarah/cto/client/digimath"
 	"github.com/CrimsonSarah/cto/client/game/card"
 	"github.com/CrimsonSarah/cto/client/game/render"
 	"github.com/CrimsonSarah/cto/client/game/world"
@@ -27,24 +26,42 @@ func MakeGame() Game {
 	return Game{}
 }
 
-func (g *Game) Init() {
-	g.Renderer.Init()
+func (g *Game) Init(context ui.InitContext) {
+	g.Renderer.Init(context.Width, context.Height)
 
 	c := card.MakeCard(
 		"BT5-103",
 		"A Blazing Storm of Metal!",
 	)
 
-	placed_card := world.MakePlacedDefault(&c)
+	placedCard := world.MakePlacedDefault(&c)
+
+	placedCard.Transform.RotateX(0.3 * math.Pi)
+	placedCard.Transform.TranslateZ(-1)
+
+	log.Println("Placed card", placedCard.Transform.GetPosition())
 
 	log.Printf("Init renderable card\n")
-	g.renderableCard = g.Renderer.CardRenderer.MakeRenderableCard(&placed_card)
+	g.renderableCard = g.Renderer.CardRenderer.MakeRenderableCard(&placedCard)
 }
 
-func (g *Game) Tick(time ui.GameTime) bool {
-	g.renderableCard.Transform = g.renderableCard.Transform.Mul(
-		digimath.Matrix44RotateZ(math.Pi * time.Dtf),
-	)
+func (g *Game) Tick(f ui.FrameContext) bool {
+	for event, ok := f.Events.Dequeue(); ok; event, ok = f.Events.Dequeue() {
+		if eventButton, ok := event.(*gdk.EventButton); ok {
+			log.Println("Event Button", eventButton)
+		} else if eventKey, ok := event.(*gdk.EventKey); ok {
+			log.Println("Event Key", eventKey, eventKey.KeyVal(), gdk.KEY_W)
+
+			if eventKey.KeyVal() == gdk.KEY_w {
+				log.Println("Moving", g.renderableCard.Transform.GetPosition())
+				g.renderableCard.Transform.TranslateZ(-2 * f.Dtf)
+			} else if eventKey.KeyVal() == gdk.KEY_s {
+				log.Println("Moving", g.renderableCard.Transform.GetPosition())
+				g.renderableCard.Transform.TranslateZ(2 * f.Dtf)
+			}
+		}
+		log.Println("Event found!")
+	}
 
 	return true
 }
@@ -52,4 +69,8 @@ func (g *Game) Tick(time ui.GameTime) bool {
 func (g *Game) Render(area *gtk.GLArea, context *gdk.GLContext) {
 	g.Renderer.Clear()
 	g.Renderer.CardRenderer.RenderCard(&g.renderableCard)
+}
+
+func (g *Game) Configure(newWidth, newHeight int) {
+	g.Renderer.Configure(newWidth, newHeight)
 }
