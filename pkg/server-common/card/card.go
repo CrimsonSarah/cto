@@ -19,10 +19,11 @@ type Digimon struct {
 	Card
 	IsInherited     bool
 	IsTapped        bool
+	MemoryCost      int
 	InheritedEffect func()
+	OnPlay          func()
 	Effect          func()
 	Security        func()
-	MemoryCost      byte
 	Level           byte
 	DP              int
 	EvolutionLine   []CardType
@@ -32,38 +33,39 @@ type Tamer struct {
 	Card
 	IsInherited     bool
 	IsTapped        bool
+	MemoryCost      int
 	InheritedEffect func()
+	OnPlay          func()
 	Effect          func()
 	Security        func()
-	MemoryCost      byte
 	EvolutionLine   []CardType
 }
 
 type Option struct {
 	Card
-	Effect     func()
+	MemoryCost int
+	OnPlay     func()
 	Security   func()
-	MemoryCost byte
 }
 
 type CardType interface {
 	ReturnTrigger(byte)
+	ReturnMemoryCost() int
 	Untap()
 	Tap()
 }
 
-func (dt Digitama) ReturnTrigger(trigger byte) {
-	dt.InheritedEffect()
-}
-
 func (dg Digimon) ReturnTrigger(trigger byte) {
 	const (
-		effect byte = iota
+		onplay byte = iota
+		effect
 		inheritedEffect
 		security
 	)
 
 	switch trigger {
+	case onplay:
+		dg.OnPlay()
 	case effect:
 		dg.Effect()
 	case inheritedEffect:
@@ -73,15 +75,21 @@ func (dg Digimon) ReturnTrigger(trigger byte) {
 	default:
 	}
 }
+func (dg Digimon) ReturnMemoryCost() int { return dg.MemoryCost }
+func (dg Digimon) Untap()                { dg.IsTapped = false }
+func (dg Digimon) Tap()                  { dg.IsTapped = true }
 
 func (t Tamer) ReturnTrigger(trigger byte) {
 	const (
-		effect byte = iota
+		onplay byte = iota
+		effect
 		inheritedEffect
 		security
 	)
 
 	switch trigger {
+	case onplay:
+		t.OnPlay()
 	case effect:
 		t.Effect()
 	case inheritedEffect:
@@ -91,40 +99,31 @@ func (t Tamer) ReturnTrigger(trigger byte) {
 	default:
 	}
 }
+func (t Tamer) ReturnMemoryCost() int { return t.MemoryCost }
+func (t Tamer) Untap()                { t.IsTapped = false }
+func (t Tamer) Tap()                  { t.IsTapped = true }
 
 func (o Option) ReturnTrigger(trigger byte) {
 	const (
-		effect byte = iota
+		onplay byte = iota
+		effect
 		inheritedEffect
 		security
 	)
 
 	switch trigger {
 	case effect:
-		o.Effect()
+		o.OnPlay()
 	case security:
 		o.Security()
 	default:
 	}
 }
+func (o Option) ReturnMemoryCost() int { return o.MemoryCost }
+func (o Option) Untap()                {}
+func (o Option) Tap()                  {}
 
-func (dg Digimon) Untap() {
-	dg.IsTapped = false
-}
-
-func (t Tamer) Untap() {
-	t.IsTapped = false
-}
-
-func (dg Digimon) Tap() {
-	dg.IsTapped = true
-}
-
-func (t Tamer) Tap() {
-	t.IsTapped = true
-}
-
-func (dt Digitama) Tap()   {}
-func (o Option) Tap()      {}
-func (dt Digitama) Untap() {}
-func (o Option) Untap()    {}
+func (dt Digitama) ReturnTrigger(trigger byte) { dt.InheritedEffect() }
+func (dt Digitama) ReturnMemoryCost() int      { return 0 }
+func (dt Digitama) Untap()                     {}
+func (dt Digitama) Tap()                       {}

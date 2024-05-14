@@ -8,17 +8,18 @@ import (
 )
 
 const (
-	effect byte = iota
+	onplay byte = iota
+	effect
 	inheritedEffect
 	security
 )
 
 func TestStack(t *testing.T) {
 	stackteste := Stack{}
-	Trigger(dgl.Agumon, &stackteste)
-	Trigger(dtl.Koromon, &stackteste)
+	Trigger(dgl.Agumon, &stackteste, effect)
+	Trigger(dtl.Koromon, &stackteste, inheritedEffect)
 
-	Resolve(&stackteste, effect)
+	Resolve(&stackteste)
 
-	Resolve(&stackteste, inheritedEffect)
+	Resolve(&stackteste)
 }
