@@ -5,9 +5,9 @@ import (
 )
 
 // In degrees.
-const PROJECTION_FOV_Y float32 = 90
+const PROJECTION_FOV_Y float32 = 60
 
-const PROJECTION_FAR float32 = 20
+const PROJECTION_FAR float32 = 10
 const PROJECTION_NEAR float32 = 1
 
 func GetProjection(areaWidth, areaHeight float32) digimath.Matrix44 {

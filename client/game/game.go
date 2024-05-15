@@ -17,7 +17,8 @@ type Game struct {
 	Renderer render.Renderer
 
 	// Have to think harder about this
-	renderableCard render.RenderableCard
+	renderableCard1 render.RenderableCard
+	renderableCard2 render.RenderableCard
 }
 
 // Everything below is currently just for testing
@@ -34,15 +35,19 @@ func (g *Game) Init(context ui.InitContext) {
 		"A Blazing Storm of Metal!",
 	)
 
-	placedCard := world.MakePlacedDefault(&c)
+	placedCard1 := world.MakePlacedDefault(&c)
+	placedCard2 := world.MakePlacedDefault(&c)
 
 	// placedCard.Transform.RotateY(0.3 * math.Pi)
-	placedCard.Transform.TranslateZ(-1.5)
+	placedCard1.Transform.TranslateX(-0.5)
+	placedCard1.Transform.TranslateZ(-5.5)
 
-	log.Println("Placed card", placedCard.Transform.GetPosition())
+	placedCard2.Transform.TranslateX(0.5)
+	placedCard2.Transform.TranslateZ(-5.5)
 
-	log.Printf("Init renderable card\n")
-	g.renderableCard = g.Renderer.CardRenderer.MakeRenderableCard(&placedCard)
+	log.Printf("Init renderable cards\n")
+	g.renderableCard1 = g.Renderer.CardRenderer.MakeRenderableCard(&placedCard1)
+	g.renderableCard2 = g.Renderer.CardRenderer.MakeRenderableCard(&placedCard2)
 }
 
 func (g *Game) Tick(f ui.FrameContext) bool {
@@ -53,17 +58,23 @@ func (g *Game) Tick(f ui.FrameContext) bool {
 			log.Println("Event Key", eventKey, eventKey.KeyVal(), gdk.KEY_W)
 
 			if eventKey.KeyVal() == gdk.KEY_w {
-				log.Println("Moving", g.renderableCard.Transform.GetPosition())
-				g.renderableCard.Transform.TranslateY(-2 * f.Dtf)
+				g.renderableCard1.Transform.RotateX(0.25 * math.Pi * f.Dtf)
+				g.renderableCard2.Transform.RotateX(0.25 * math.Pi * f.Dtf)
 			} else if eventKey.KeyVal() == gdk.KEY_s {
-				log.Println("Moving", g.renderableCard.Transform.GetPosition())
-				g.renderableCard.Transform.TranslateY(2 * f.Dtf)
+				g.renderableCard1.Transform.RotateX(-0.25 * math.Pi * f.Dtf)
+				g.renderableCard2.Transform.RotateX(-0.25 * math.Pi * f.Dtf)
+			} else if eventKey.KeyVal() == gdk.KEY_a {
+				g.renderableCard1.Transform.TranslateX(-0.25 * f.Dtf)
+				g.renderableCard2.Transform.TranslateX(0.25 * f.Dtf)
+			} else if eventKey.KeyVal() == gdk.KEY_d {
+				g.renderableCard1.Transform.TranslateX(0.25 * f.Dtf)
+				g.renderableCard2.Transform.TranslateX(-0.25 * f.Dtf)
 			}
 		}
 		log.Println("Event found!")
 	}
 
-	g.renderableCard.Transform.RotateX(0.1 * math.Pi * f.Dtf)
+	// g.renderableCard.Transform.RotateX(0.1 * math.Pi * f.Dtf)
 	// log.Printf("Transform\n%s\n", g.renderableCard.Transform.Format())
 
 	return true
@@ -71,7 +82,8 @@ func (g *Game) Tick(f ui.FrameContext) bool {
 
 func (g *Game) Render(area *gtk.GLArea, context *gdk.GLContext) {
 	g.Renderer.Clear()
-	g.Renderer.CardRenderer.RenderCard(&g.renderableCard)
+	g.Renderer.CardRenderer.RenderCard(&g.renderableCard1)
+	g.Renderer.CardRenderer.RenderCard(&g.renderableCard2)
 }
 
 func (g *Game) Configure(newWidth, newHeight int) {

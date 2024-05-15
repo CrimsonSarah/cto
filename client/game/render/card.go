@@ -34,9 +34,9 @@ type Vertex struct {
 
 var vertexBuffer = [4]Vertex{
 	{x: -0.358, y: -0.5, z: 0, texX: 0, texY: 1},
-	{x: 0.358, y: -0.5, z: 0, texX: 1, texY: 1},
-	{x: 0.358, y: 0.5, z: 0, texX: 1, texY: 0},
 	{x: -0.358, y: 0.5, z: 0, texX: 0, texY: 0},
+	{x: 0.358, y: 0.5, z: 0, texX: 1, texY: 0},
+	{x: 0.358, y: -0.5, z: 0, texX: 1, texY: 1},
 }
 
 var indexBuffer = [6]uint32{
