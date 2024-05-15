@@ -34,7 +34,7 @@ func onActivate(application *gtk.Application) {
 	}
 
 	appWindow.SetTitle("CTO")
-	appWindow.SetDefaultSize(640, 480)
+	appWindow.SetDefaultSize(1920, 1080)
 
 	css, err := gtk.CssProviderNew()
 	if err != nil {

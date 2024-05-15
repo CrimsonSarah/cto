@@ -49,8 +49,10 @@ type CardRenderer struct {
 	VertexArrayId uint32
 	ProgramId     uint32
 
-	ProjectionUniformLocation int32
-	TransformUniformLocation  int32
+	ProjectionUniformLocation           int32
+	TransformScaleUniformLocation       int32
+	TransformRotationUniformLocation    int32
+	TransformTranslationUniformLocation int32
 
 	CardTextures map[string]uint32
 }
@@ -130,9 +132,20 @@ func (r *CardRenderer) Init(projection *digimath.Matrix44) {
 
 	gl.UniformMatrix4fv(r.ProjectionUniformLocation, 1, false, &projection[0])
 
-	r.TransformUniformLocation = gl.GetUniformLocation(
+	// TODO: Read about UBOs
+	r.TransformScaleUniformLocation = gl.GetUniformLocation(
 		r.ProgramId,
-		gl.Str("u_Transform\000"),
+		gl.Str("u_TransformScale\000"),
+	)
+
+	r.TransformRotationUniformLocation = gl.GetUniformLocation(
+		r.ProgramId,
+		gl.Str("u_TransformRotation\000"),
+	)
+
+	r.TransformTranslationUniformLocation = gl.GetUniformLocation(
+		r.ProgramId,
+		gl.Str("u_TransformTranslation\000"),
 	)
 
 	// Filled on demand
@@ -226,10 +239,24 @@ func (r *CardRenderer) RenderCard(c *RenderableCard) {
 	gl.BindTexture(gl.TEXTURE_2D, c.Render.TextureId)
 
 	gl.UniformMatrix4fv(
-		r.TransformUniformLocation,
+		r.TransformScaleUniformLocation,
 		1,
 		false,
-		&c.Transform.Matrix44[0],
+		&c.Transform.ScaleMatrix[0],
+	)
+
+	gl.UniformMatrix4fv(
+		r.TransformRotationUniformLocation,
+		1,
+		false,
+		&c.Transform.RotationMatrix[0],
+	)
+
+	gl.UniformMatrix4fv(
+		r.TransformTranslationUniformLocation,
+		1,
+		false,
+		&c.Transform.TranslationMatrix[0],
 	)
 
 	gl.DrawElements(

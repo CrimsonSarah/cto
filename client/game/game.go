@@ -36,8 +36,8 @@ func (g *Game) Init(context ui.InitContext) {
 
 	placedCard := world.MakePlacedDefault(&c)
 
-	placedCard.Transform.RotateX(0.3 * math.Pi)
-	placedCard.Transform.TranslateZ(-1)
+	// placedCard.Transform.RotateY(0.3 * math.Pi)
+	placedCard.Transform.TranslateZ(-1.5)
 
 	log.Println("Placed card", placedCard.Transform.GetPosition())
 
@@ -54,14 +54,17 @@ func (g *Game) Tick(f ui.FrameContext) bool {
 
 			if eventKey.KeyVal() == gdk.KEY_w {
 				log.Println("Moving", g.renderableCard.Transform.GetPosition())
-				g.renderableCard.Transform.TranslateZ(-2 * f.Dtf)
+				g.renderableCard.Transform.TranslateY(-2 * f.Dtf)
 			} else if eventKey.KeyVal() == gdk.KEY_s {
 				log.Println("Moving", g.renderableCard.Transform.GetPosition())
-				g.renderableCard.Transform.TranslateZ(2 * f.Dtf)
+				g.renderableCard.Transform.TranslateY(2 * f.Dtf)
 			}
 		}
 		log.Println("Event found!")
 	}
+
+	g.renderableCard.Transform.RotateX(0.1 * math.Pi * f.Dtf)
+	// log.Printf("Transform\n%s\n", g.renderableCard.Transform.Format())
 
 	return true
 }

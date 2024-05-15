@@ -1,8 +1,11 @@
 package digimath
 
-import "math"
+import (
+	"fmt"
+	"math"
+)
 
-// Everything row-major. 32-bit floats to play well with the GPU.
+// Everything column-major. 32-bit floats to play well with the GPU.
 
 // Vec2
 
@@ -48,6 +51,34 @@ func (v Vec3) Scale(amount float32) Vec3 {
 	return MakeVec3(v.X()*amount, v.Y()*amount, v.Z()*amount)
 }
 
+// Vec4
+
+type Vec4 [4]float32
+
+func MakeVec4(x, y, z, w float32) Vec4 {
+	return Vec4([4]float32{x, y, z, w})
+}
+
+func (v Vec4) X() float32 {
+	return v[0]
+}
+
+func (v Vec4) Y() float32 {
+	return v[1]
+}
+
+func (v Vec4) Z() float32 {
+	return v[2]
+}
+
+func (v Vec4) W() float32 {
+	return v[3]
+}
+
+func (v Vec4) Scale(amount float32) Vec4 {
+	return MakeVec4(v.X()*amount, v.Y()*amount, v.Z()*amount, v.W()*amount)
+}
+
 // Matrix33
 
 type Matrix33 [9]float32
@@ -58,9 +89,9 @@ func MakeMatrix33(
 	x31, x32, x33 float32,
 ) Matrix33 {
 	return Matrix33([9]float32{
-		x11, x12, x13,
-		x21, x22, x23,
-		x31, x32, x33,
+		x11, x21, x31,
+		x12, x22, x32,
+		x13, x23, x33,
 	})
 }
 
@@ -83,16 +114,16 @@ func MakeMatrix44(
 	x41, x42, x43, x44 float32,
 ) Matrix44 {
 	return Matrix44([16]float32{
-		x11, x12, x13, x14,
-		x21, x22, x23, x24,
-		x31, x32, x33, x34,
-		x41, x42, x43, x44,
+		x11, x21, x31, x41,
+		x12, x22, x32, x42,
+		x13, x23, x33, x43,
+		x14, x24, x34, x44,
 	})
 }
 
 // 0 indexed!!
 func (m Matrix44) Entry(i, j uintptr) float32 {
-	return m[i*4+j]
+	return m[j*4+i]
 }
 
 func (m Matrix44) Mul(other Matrix44) Matrix44 {
@@ -108,6 +139,22 @@ func (m Matrix44) Mul(other Matrix44) Matrix44 {
 		me(1, 0), me(1, 1), me(1, 2), me(1, 3),
 		me(2, 0), me(2, 1), me(2, 2), me(2, 3),
 		me(3, 0), me(2, 1), me(3, 2), me(3, 3),
+	)
+}
+
+func (m Matrix44) MulV(v Vec4) Vec4 {
+	me := func(i uintptr) float32 {
+		return m.Entry(i, 0)*v.X() +
+			m.Entry(i, 1)*v.Y() +
+			m.Entry(i, 2)*v.Z() +
+			m.Entry(i, 3)*v.W()
+	}
+
+	return MakeVec4(
+		me(0),
+		me(1),
+		me(2),
+		me(3),
 	)
 }
 
@@ -180,5 +227,20 @@ func Matrix44RotateX(amount float32) Matrix44 {
 		0, cos, -sin, 0,
 		0, sin, cos, 0,
 		0, 0, 0, 1,
+	)
+}
+
+// For debugging
+func (m *Matrix44) Format() string {
+	return fmt.Sprintf(
+		""+
+			"[ %.2f, %.2f, %.2f, %.2f ]\n"+
+			"[ %.2f, %.2f, %.2f, %.2f ]\n"+
+			"[ %.2f, %.2f, %.2f, %.2f ]\n"+
+			"[ %.2f, %.2f, %.2f, %.2f ]",
+		m.Entry(0, 0), m.Entry(0, 1), m.Entry(0, 2), m.Entry(0, 3),
+		m.Entry(1, 0), m.Entry(1, 1), m.Entry(1, 2), m.Entry(1, 3),
+		m.Entry(2, 0), m.Entry(2, 1), m.Entry(2, 2), m.Entry(2, 3),
+		m.Entry(3, 0), m.Entry(3, 1), m.Entry(3, 2), m.Entry(3, 3),
 	)
 }
