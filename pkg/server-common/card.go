@@ -1,4 +1,4 @@
-package dependencies
+package server
 
 type Card struct {
 	//Card identifiers
@@ -21,6 +21,12 @@ type Card struct {
 	Level byte
 	DP    int
 
-	//Name keys according to effect timing (i.e.: WhenDigivolving, OnPlay, EndAttack, etc.)
-	Effects map[string]func()
+	//Name keys according to effect timing (i.e.: WhenDigivolving, OnPlay, AttackEnd, etc.)
+	Effects map[string]func(*Game)
 }
+
+//Timings used:
+//TurnEnd
+//WhenAttacking
+//YourTurn
+//YourTurnEnd

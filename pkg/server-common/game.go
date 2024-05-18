@@ -1,15 +1,11 @@
-package game
-
-import (
-	"github.com/CrimsonSarah/cto/pkg/server-common/dependencies"
-)
+package server
 
 type Game struct {
-	Players       [2]*dependencies.Player
-	TurnOwner     *dependencies.Player
+	Players       [2]*Player
+	TurnOwner     *Player
 	TurnStep      byte
 	CurrentAction byte
-	Stack         *dependencies.Stack
+	Stack         *Stack
 }
 
 // Consts to facilitate code readability
@@ -18,11 +14,11 @@ const (
 	Player2
 )
 const (
-	Untap byte = iota
-	Draw
-	Breed
-	Main
-	End
+	UntapStep byte = iota
+	DrawStep
+	BreedStep
+	MainStep
+	EndStep
 )
 const (
 	Null byte = iota
@@ -33,25 +29,25 @@ const (
 
 // Game state related methods
 func SetUntapStep(game *Game) {
-	game.TurnStep = Untap
+	game.TurnStep = UntapStep
 	for i := 0; i < len(game.TurnOwner.Board); i++ {
-		dependencies.Untap(game.TurnOwner.Board[i])
+		Untap(game.TurnOwner.Board[i])
 	}
 	SetDrawStep(game)
 }
 func SetDrawStep(game *Game) {
-	game.TurnStep = Draw
-	dependencies.Draw(game.TurnOwner, 1)
+	game.TurnStep = DrawStep
+	Draw(game.TurnOwner, 1)
 	SetBreedStep(game)
 }
 func SetBreedStep(game *Game) {
-	game.TurnStep = Breed
+	game.TurnStep = BreedStep
 }
 func SetMainStep(game *Game) {
-	game.TurnStep = Main
+	game.TurnStep = MainStep
 }
 func SetEndStep(game *Game) {
-	game.TurnStep = End
+	game.TurnStep = EndStep
 }
 func SetFreeAction(game *Game) {
 	game.CurrentAction = Null
