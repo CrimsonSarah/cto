@@ -7,7 +7,6 @@ import (
 	"unsafe"
 
 	"github.com/CrimsonSarah/cto/client/digigl"
-	"github.com/CrimsonSarah/cto/client/digimath"
 	"github.com/CrimsonSarah/cto/client/game/card"
 	"github.com/CrimsonSarah/cto/client/game/world"
 	"github.com/CrimsonSarah/cto/client/resources"
@@ -23,42 +22,20 @@ type RenderableCard struct {
 	Render CardRenderData
 }
 
-type Vertex struct {
-	x float32
-	y float32
-	z float32
-
-	texX float32
-	texY float32
-}
-
-var vertexBuffer = [4]Vertex{
-	{x: -0.358, y: -0.5, z: 0, texX: 0, texY: 1},
-	{x: -0.358, y: 0.5, z: 0, texX: 0, texY: 0},
-	{x: 0.358, y: 0.5, z: 0, texX: 1, texY: 0},
-	{x: 0.358, y: -0.5, z: 0, texX: 1, texY: 1},
-}
-
-var indexBuffer = [6]uint32{
-	0, 1, 2, 2, 3, 0,
-}
-
 type CardRenderer struct {
-	Projection *digimath.Matrix44
+	World *world.World
 
 	VertexArrayId uint32
 	ProgramId     uint32
 
-	ProjectionUniformLocation           int32
-	TransformScaleUniformLocation       int32
-	TransformRotationUniformLocation    int32
-	TransformTranslationUniformLocation int32
+	ProjectionUniformLocation int32
+	TransformUniformLocation  int32
 
 	CardTextures map[string]uint32
 }
 
-func (r *CardRenderer) Init(projection *digimath.Matrix44) {
-	r.Projection = projection
+func (r *CardRenderer) Init(world *world.World) {
+	r.World = world
 
 	// Setup vertex and index buffers
 	log.Println("Initialiazing cards")
@@ -72,8 +49,8 @@ func (r *CardRenderer) Init(projection *digimath.Matrix44) {
 
 	gl.BufferData(
 		gl.ARRAY_BUFFER,
-		int(unsafe.Sizeof(vertexBuffer)),
-		gl.Ptr(vertexBuffer[:]),
+		int(unsafe.Sizeof(card.CardVertices)),
+		gl.Ptr(card.CardVertices.Coords[:]),
 		gl.STATIC_DRAW,
 	)
 
@@ -83,8 +60,8 @@ func (r *CardRenderer) Init(projection *digimath.Matrix44) {
 		3,
 		gl.FLOAT,
 		false,
-		int32(unsafe.Sizeof(Vertex{})),
-		unsafe.Offsetof(Vertex{}.x),
+		0,
+		unsafe.Offsetof(card.CardVertices.Coords),
 	)
 
 	gl.EnableVertexAttribArray(1)
@@ -93,8 +70,8 @@ func (r *CardRenderer) Init(projection *digimath.Matrix44) {
 		2,
 		gl.FLOAT,
 		false,
-		int32(unsafe.Sizeof(Vertex{})),
-		unsafe.Offsetof(Vertex{}.texX),
+		0,
+		unsafe.Offsetof(card.CardVertices.TexCoords),
 	)
 
 	var indexBufferId uint32
@@ -102,8 +79,8 @@ func (r *CardRenderer) Init(projection *digimath.Matrix44) {
 	gl.BindBuffer(gl.ELEMENT_ARRAY_BUFFER, indexBufferId)
 
 	gl.BufferData(gl.ELEMENT_ARRAY_BUFFER,
-		int(unsafe.Sizeof(indexBuffer)),
-		gl.Ptr(indexBuffer[:]),
+		int(unsafe.Sizeof(card.CardVertexIndices)),
+		gl.Ptr(card.CardVertexIndices[:]),
 		gl.STATIC_DRAW,
 	)
 
@@ -130,31 +107,30 @@ func (r *CardRenderer) Init(projection *digimath.Matrix44) {
 		gl.Str("u_Projection\000"),
 	)
 
-	gl.UniformMatrix4fv(r.ProjectionUniformLocation, 1, false, &projection[0])
-
-	// TODO: Read about UBOs
-	r.TransformScaleUniformLocation = gl.GetUniformLocation(
-		r.ProgramId,
-		gl.Str("u_TransformScale\000"),
+	gl.UniformMatrix4fv(
+		r.ProjectionUniformLocation,
+		1,
+		false,
+		&world.Projection[0],
 	)
 
-	r.TransformRotationUniformLocation = gl.GetUniformLocation(
+	r.TransformUniformLocation = gl.GetUniformLocation(
 		r.ProgramId,
-		gl.Str("u_TransformRotation\000"),
-	)
-
-	r.TransformTranslationUniformLocation = gl.GetUniformLocation(
-		r.ProgramId,
-		gl.Str("u_TransformTranslation\000"),
+		gl.Str("u_Transform\000"),
 	)
 
 	// Filled on demand
 	r.CardTextures = make(map[string]uint32)
 }
 
-func (r *CardRenderer) Configure(projection *digimath.Matrix44) {
+func (r *CardRenderer) Configure() {
 	gl.UseProgram(r.ProgramId)
-	gl.UniformMatrix4fv(r.ProjectionUniformLocation, 1, false, &projection[0])
+	gl.UniformMatrix4fv(
+		r.ProjectionUniformLocation,
+		1,
+		false,
+		&r.World.Projection[0],
+	)
 }
 
 func (r *CardRenderer) attachShader(
@@ -238,30 +214,19 @@ func (r *CardRenderer) RenderCard(c *RenderableCard) {
 	gl.ActiveTexture(digigl.SpriteTextureUnit)
 	gl.BindTexture(gl.TEXTURE_2D, c.Render.TextureId)
 
-	gl.UniformMatrix4fv(
-		r.TransformScaleUniformLocation,
-		1,
-		false,
-		&c.Transform.ScaleMatrix[0],
-	)
+	transform := c.Transform.ToMatrix2()
+	// fmt.Printf("Transform\n%s\n", transform.Format())
 
 	gl.UniformMatrix4fv(
-		r.TransformRotationUniformLocation,
+		r.TransformUniformLocation,
 		1,
 		false,
-		&c.Transform.RotationMatrix[0],
-	)
-
-	gl.UniformMatrix4fv(
-		r.TransformTranslationUniformLocation,
-		1,
-		false,
-		&c.Transform.TranslationMatrix[0],
+		&transform[0],
 	)
 
 	gl.DrawElements(
 		gl.TRIANGLES,
-		int32(len(indexBuffer)),
+		int32(len(card.CardVertexIndices)),
 		gl.UNSIGNED_INT,
 		nil,
 	)

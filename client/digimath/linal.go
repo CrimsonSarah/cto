@@ -19,7 +19,15 @@ func (v Vec2) X() float32 {
 	return v[0]
 }
 
+func (v Vec2) U() float32 {
+	return v[0]
+}
+
 func (v Vec2) Y() float32 {
+	return v[1]
+}
+
+func (v Vec2) V() float32 {
 	return v[1]
 }
 
@@ -30,6 +38,8 @@ func (v Vec2) Scale(amount float32) Vec2 {
 // Vec3
 
 type Vec3 [3]float32
+
+var Vec3Zero = Vec3([3]float32{0, 0, 0})
 
 func MakeVec3(x, y, z float32) Vec3 {
 	return Vec3([3]float32{x, y, z})
@@ -49,6 +59,10 @@ func (v Vec3) Z() float32 {
 
 func (v Vec3) Scale(amount float32) Vec3 {
 	return MakeVec3(v.X()*amount, v.Y()*amount, v.Z()*amount)
+}
+
+func (v1 Vec3) Add(v2 Vec3) Vec3 {
+	return MakeVec3(v1.X()+v2.X(), v1.Y()+v2.Y(), v1.Z()+v2.Z())
 }
 
 // Vec4
@@ -122,8 +136,18 @@ func MakeMatrix44(
 }
 
 // 0 indexed!!
+// TODO: ^ Don't
 func (m Matrix44) Entry(i, j uintptr) float32 {
 	return m[j*4+i]
+}
+
+func (m Matrix44) Scale(s float32) Matrix44 {
+	return MakeMatrix44(
+		m.Entry(0, 0)*s, m.Entry(0, 1)*s, m.Entry(0, 2)*s, m.Entry(0, 3)*s,
+		m.Entry(1, 0)*s, m.Entry(1, 1)*s, m.Entry(1, 2)*s, m.Entry(1, 3)*s,
+		m.Entry(2, 0)*s, m.Entry(2, 1)*s, m.Entry(2, 2)*s, m.Entry(2, 3)*s,
+		m.Entry(3, 0)*s, m.Entry(3, 1)*s, m.Entry(3, 2)*s, m.Entry(3, 3)*s,
+	)
 }
 
 func (m Matrix44) Mul(other Matrix44) Matrix44 {
@@ -138,7 +162,7 @@ func (m Matrix44) Mul(other Matrix44) Matrix44 {
 		me(0, 0), me(0, 1), me(0, 2), me(0, 3),
 		me(1, 0), me(1, 1), me(1, 2), me(1, 3),
 		me(2, 0), me(2, 1), me(2, 2), me(2, 3),
-		me(3, 0), me(2, 1), me(3, 2), me(3, 3),
+		me(3, 0), me(3, 1), me(3, 2), me(3, 3),
 	)
 }
 
@@ -230,7 +254,7 @@ func Matrix44RotateX(amount float32) Matrix44 {
 	)
 }
 
-// For debugging
+// For debugging.
 func (m *Matrix44) Format() string {
 	return fmt.Sprintf(
 		""+

@@ -34,7 +34,7 @@ func onActivate(application *gtk.Application) {
 	}
 
 	appWindow.SetTitle("CTO")
-	appWindow.SetDefaultSize(1920, 1080)
+	appWindow.SetDefaultSize(1280, 720)
 
 	css, err := gtk.CssProviderNew()
 	if err != nil {
@@ -53,8 +53,11 @@ func onActivate(application *gtk.Application) {
 	gameWidget := ui.GameWidgetNew(&game)
 
 	appWindow.Connect("configure-event", func(window *gtk.ApplicationWindow, event *gdk.Event) {
-		eventConfigure := gdk.EventConfigureNewFromEvent(event)
-		game.Configure(eventConfigure.Width(), eventConfigure.Height())
+		// width := gameWidget.GetAllocatedWidth()
+		// height := gameWidget.GetAllocatedHeight()
+		configEvent := gdk.EventConfigureNewFromEvent(event)
+
+		game.Configure(configEvent.Width(), configEvent.Height())
 	})
 
 	appWindow.Add(gameWidget)

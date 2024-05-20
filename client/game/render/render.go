@@ -6,26 +6,18 @@ import (
 )
 
 type Renderer struct {
+	World        *world.World
 	CardRenderer CardRenderer
 }
 
 // Should be called after DigiGL is initialized
-func (r *Renderer) Init(width, height int) {
-	projection := world.GetProjection(
-		float32(width),
-		float32(height),
-	)
-
-	r.CardRenderer.Init(&projection)
+func (r *Renderer) Init(world *world.World) {
+	r.World = world
+	r.CardRenderer.Init(world)
 }
 
-func (r *Renderer) Configure(width, height int) {
-	projection := world.GetProjection(
-		float32(width),
-		float32(height),
-	)
-
-	r.CardRenderer.Configure(&projection)
+func (r *Renderer) Configure() {
+	r.CardRenderer.Configure()
 }
 
 func (r *Renderer) Clear() {

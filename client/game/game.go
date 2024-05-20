@@ -1,9 +1,11 @@
 package game
 
 import (
+	"fmt"
 	"log"
 	"math"
 
+	"github.com/CrimsonSarah/cto/client/digimath"
 	"github.com/CrimsonSarah/cto/client/game/card"
 	"github.com/CrimsonSarah/cto/client/game/render"
 	"github.com/CrimsonSarah/cto/client/game/world"
@@ -14,11 +16,24 @@ import (
 
 type Game struct {
 	State    GameState
+	World    world.World
 	Renderer render.Renderer
+
+	Width  int
+	Height int
 
 	// Have to think harder about this
 	renderableCard1 render.RenderableCard
 	renderableCard2 render.RenderableCard
+}
+
+// Goes from [0..Width] coordinates to [-1..1].
+// Only X and Y are significant. The others are there for convenience.
+func (g *Game) normalizedWindowCoordinates(x, y float64) digimath.Vec4 {
+	normalizedX := (float32(x) * 2 / float32(g.Width)) - 1
+	normalizedY := -(float32(y)*2/float32(g.Height) - 1)
+
+	return digimath.MakeVec4(normalizedX, normalizedY, 0, 0)
 }
 
 // Everything below is currently just for testing
@@ -28,7 +43,12 @@ func MakeGame() Game {
 }
 
 func (g *Game) Init(context ui.InitContext) {
-	g.Renderer.Init(context.Width, context.Height)
+	fmt.Println("Initializing")
+	g.World = world.MakeWorld(context.Width, context.Height)
+	g.Renderer.Init(&g.World)
+
+	g.Width = context.Width
+	g.Height = context.Height
 
 	c := card.MakeCard(
 		"BT5-103",
@@ -40,10 +60,15 @@ func (g *Game) Init(context ui.InitContext) {
 
 	// placedCard.Transform.RotateY(0.3 * math.Pi)
 	placedCard1.Transform.TranslateX(-0.5)
-	placedCard1.Transform.TranslateZ(-5.5)
+	placedCard1.Transform.TranslateZ(-2)
 
 	placedCard2.Transform.TranslateX(0.5)
-	placedCard2.Transform.TranslateZ(-5.5)
+	placedCard2.Transform.TranslateZ(-2)
+
+	log.Printf("Cards @ %v | %v",
+		placedCard1.Transform.GetPosition(),
+		placedCard2.Transform.GetPosition(),
+	)
 
 	log.Printf("Init renderable cards\n")
 	g.renderableCard1 = g.Renderer.CardRenderer.MakeRenderableCard(&placedCard1)
@@ -54,6 +79,17 @@ func (g *Game) Tick(f ui.FrameContext) bool {
 	for event, ok := f.Events.Dequeue(); ok; event, ok = f.Events.Dequeue() {
 		if eventButton, ok := event.(*gdk.EventButton); ok {
 			log.Println("Event Button", eventButton)
+
+			normalized := g.normalizedWindowCoordinates(
+				eventButton.X(),
+				eventButton.Y(),
+			)
+
+			// TODO: Account for depth.
+			transformed := g.World.Noitcejorp.MulV(normalized)
+			fmt.Printf("Point 1\n%v\n", normalized)
+			fmt.Printf("Point 2\n%v\n", transformed)
+
 		} else if eventKey, ok := event.(*gdk.EventKey); ok {
 			log.Println("Event Key", eventKey, eventKey.KeyVal(), gdk.KEY_W)
 
@@ -63,6 +99,7 @@ func (g *Game) Tick(f ui.FrameContext) bool {
 			} else if eventKey.KeyVal() == gdk.KEY_s {
 				g.renderableCard1.Transform.RotateX(-0.25 * math.Pi * f.Dtf)
 				g.renderableCard2.Transform.RotateX(-0.25 * math.Pi * f.Dtf)
+				fmt.Printf("Rotation %v\n", g.renderableCard1.Transform.Rotation)
 			} else if eventKey.KeyVal() == gdk.KEY_a {
 				g.renderableCard1.Transform.TranslateX(-0.25 * f.Dtf)
 				g.renderableCard2.Transform.TranslateX(0.25 * f.Dtf)
@@ -87,5 +124,6 @@ func (g *Game) Render(area *gtk.GLArea, context *gdk.GLContext) {
 }
 
 func (g *Game) Configure(newWidth, newHeight int) {
-	g.Renderer.Configure(newWidth, newHeight)
+	g.World.Configure(newWidth, newHeight)
+	g.Renderer.Configure()
 }

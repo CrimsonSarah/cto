@@ -7,13 +7,14 @@ out vec3 v_TexCoords;
 out float v_Depth;
 
 uniform mat4 u_Projection;
-uniform mat4 u_TransformScale;
-uniform mat4 u_TransformRotation;
-uniform mat4 u_TransformTranslation;
+uniform mat4 u_Transform;
 
 void main() {
-  mat4 transform = u_TransformTranslation * u_TransformRotation * u_TransformScale;
-  vec4 projected = u_Projection * transform * vec4(in_Position.xyz, 1);
+  vec4 projected =
+      u_Projection *
+      u_Transform *
+      vec4(in_Position, 1);
+
   float depth = projected.w;
   vec4 perspectived = projected / depth;
 
