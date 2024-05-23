@@ -15,7 +15,8 @@ func main() {
 	// TestProj()
 	// TestInverses()
 	// TestTransform()
-	TestProjInverses()
+	// TestProjInverses()
+	// TestTransformInverses()
 }
 
 // Kind of emulates the vertex buffer
@@ -31,35 +32,35 @@ func vert(
 	)
 
 	projected := projection.Mul(transform).MulV(pos4)
-	projected = projected.Scale(1 / projected.W())
+	depth := projected.W()
 
-	return digimath.MakeVec4(
-		projected.X(),
-		projected.Y(),
-		projected.Z(),
-		projected.W(),
-	)
+	projected = projected.Scale(1 / depth)
+	projected.SetW(depth)
+
+	return projected
 }
 
 func TestProj() {
 	fmt.Println("")
 	fmt.Println("# Test1")
 
-	v1 := digimath.MakeVec3(1, +1, 0)
-	v2 := digimath.MakeVec3(1, -1, 0)
+	v1 := digimath.MakeVec3(2, 3, -4)
+	v2 := digimath.MakeVec3(-2, -3, -5)
 
-	transform := digimath.Matrix44RotateX(0.5 * math.Pi).Mul(
+	transform := digimath.Matrix44RotateX(0).Mul(
 		digimath.Matrix44Id(),
 	)
 
 	projection := world.GetProjection(1000, 1000)
-	// noitcejorp := world.GetNoitcejorp(projection)
+	noitcejorp := world.GetNoitcejorp(projection)
+	noitcejorp2 := projection.Inverse()
 
 	vv1 := vert(projection, transform, v1)
 	vv2 := vert(projection, transform, v2)
 
 	fmt.Printf("Projection\n%s\n", projection.Format())
-	// fmt.Printf("Projection^-1\n%s\n", noitcejorp.Format())
+	fmt.Printf("Projection^-1\n%s\n", noitcejorp.Format())
+	fmt.Printf("Projection^-1 #2\n%s\n", noitcejorp2.Format())
 	fmt.Printf("Transform\n%s\n", transform.Format())
 
 	fmt.Println("")
@@ -69,6 +70,22 @@ func TestProj() {
 	fmt.Println("")
 	fmt.Printf("V2\n%v\n", v2)
 	fmt.Printf("Result\n%v\n", vv2)
+
+	vv1Depth := vv1.W()
+	vv1_2 := vv1.Scale(vv1Depth)
+	vv1_2.SetW(vv1Depth)
+	vv1_2 = noitcejorp.MulV(vv1_2)
+
+	vv2Depth := vv2.W()
+	vv2_2 := vv2.Scale(vv2Depth)
+	vv2_2.SetW(vv2Depth)
+	vv2_2 = noitcejorp.MulV(vv2_2)
+
+	fmt.Println("")
+	fmt.Printf("V1 %v\n", vv1_2)
+
+	fmt.Println("")
+	fmt.Printf("V2 %v\n", vv2_2)
 }
 
 func TestInverses() {
@@ -152,14 +169,45 @@ func TestProjInverses() {
 	fmt.Println("")
 	fmt.Println("# Test4")
 
-	projection := world.GetProjection(1000, 1000)
+	projection := world.GetProjection(600, 1000)
 	noitcejorp := world.GetNoitcejorp(projection)
 
 	fmt.Printf("Projection\n%s\n", projection.Format())
 	fmt.Printf("Projection^-1\n%s\n", noitcejorp.Format())
 
-	id := noitcejorp.Mul(projection)
+	id1 := noitcejorp.Mul(projection)
+	id2 := projection.Mul(noitcejorp)
 
 	fmt.Println("")
-	fmt.Printf("ID\n%s\n", id.Format())
+	fmt.Printf("ID 1\n%s\n", id1.Format())
+	fmt.Printf("ID 2\n%s\n", id2.Format())
+}
+
+func TestTransformInverses() {
+	fmt.Println("")
+	fmt.Println("# Test5")
+
+	s1 := float32(1)
+	p1 := digimath.MakeVec3(1, 2, 3)
+	r1 := digimath.MakeVec3(math.Pi/6, math.Pi/6, math.Pi/4)
+
+	t1 := world.MakeTransform()
+	t1.ScaleFactor = s1
+	t1.Position = p1
+	t1.Rotation = r1
+
+	mat1 := t1.ToMatrix()
+	tam1_1 := mat1.Inverse()
+	tam1_2 := mat1.Inverse0001()
+
+	fmt.Printf("Mat1\n%s\n", mat1.Format())
+	fmt.Printf("Mat1^-1\n%s\n", tam1_1.Format())
+	fmt.Printf("Mat1^-1\n%s\n", tam1_2.Format())
+
+	id1 := tam1_1.Mul(mat1)
+	id2 := tam1_2.Mul(mat1)
+
+	fmt.Println("")
+	fmt.Printf("ID\n%s\n", id1.Format())
+	fmt.Printf("ID\n%s\n", id2.Format())
 }

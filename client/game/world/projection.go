@@ -37,12 +37,12 @@ func GetProjection(areaWidth, areaHeight float32) digimath.Matrix44 {
 
 // Projection inverse.
 func GetNoitcejorp(projection digimath.Matrix44) digimath.Matrix44 {
-	e11 := 1 / projection.Entry(0, 0)
-	e22 := 1 / projection.Entry(1, 1)
+	e11 := 1 / projection.Entry(1, 1)
+	e22 := 1 / projection.Entry(2, 2)
 
 	e34 := float32(-1)
-	e43 := 1 / projection.Entry(2, 3)
-	e44 := projection.Entry(2, 2) / projection.Entry(2, 3)
+	e43 := 1 / projection.Entry(3, 4)
+	e44 := projection.Entry(3, 3) / projection.Entry(3, 4)
 
 	noitcejorp := digimath.MakeMatrix44(
 		e11, 0, 0, 0,

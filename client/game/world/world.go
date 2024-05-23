@@ -3,6 +3,8 @@ package world
 import (
 	// "math"
 
+	"fmt"
+
 	"github.com/CrimsonSarah/cto/client/digimath"
 )
 
@@ -33,50 +35,58 @@ func (w *World) Configure(width, height int) {
 	w.Noitcejorp = GetNoitcejorp(w.Projection)
 }
 
+// `p` should be in the range [-1, +1], where X -> -1 is left and
+// Y -> -1 is down.
 func Intersects[T WorldObject](
 	obj Placed[T],
 	p digimath.Vec2,
 ) bool {
-	// // IMPORTANT: This has to do the inverse of the vertex shader.
-	// // Does everything manually because it should be more optimizable.
 
-	// transform := obj.Transform
-	// scale := transform.ScaleMatrix
-	// translation := transform.TranslationMatrix
+	index := digimath.MakeVec4(
+		p.X(), p.Y(), 0, 1,
+	)
 
-	// /*
-	//  * cos(y) cos(z) | sin(x) sin(y) cos(z) - cos(x) sin(z) | cos(x) sin(y) cos(z) + sin(x) sin(z) | 0
-	//  * cos(y) sin(z) | sin(x) sin(y) sin(z) + cos(x) cos(z) | cos(x) sin(y) sin(z) - sin(x) cos(z) | 0
-	//  * -sin(y)       | sin(x) cos(y)                        | cos(x) cos(y)                        | 0
-	//  * 0             | 0                                    | 0                                    | 1
-	//  */
-	// rotation := transform.RotationMatrix
+	fmt.Println("")
+	// Revert depth.
+	// TODO: Rotation should probably have an effect.
+	depth := obj.Transform.GetDistanceFromCamera()
+	index = index.Scale(depth)
+	fmt.Printf("Index 0 %v\n", index)
 
-	// elacs := digimath.MakeMatrix44(
-	// 	1/scale.Entry(0, 0), 0, 0, 0,
-	// 	0, 1/scale.Entry(1, 1), 0, 0,
-	// 	0, 0, 1/scale.Entry(2, 2), 0,
-	// 	0, 0, 0, 1/scale.Entry(3, 3),
+	// We need to find Z such that, after multiplying by the projection
+	// inverse, W = 1.
+	// This is just how the projection computes Z.
+	objPos := obj.Transform.GetPosition()
+
+	projectedZ :=
+		objPos.Z()*(-2/(PROJECTION_FAR-PROJECTION_NEAR)) -
+			((PROJECTION_FAR + PROJECTION_NEAR) / (PROJECTION_FAR - PROJECTION_NEAR))
+	index.SetZ(projectedZ)
+
+	// With the correct Z and W in place, invert the projection.
+	// The result are world coordinates.
+	index = obj.World.Noitcejorp.MulV(index)
+
+	fmt.Printf("Index 1 %v\n", index)
+
+	// index = digimath.MakeVec4(
+	// 	index.X()-objPos.X(),
+	// 	index.Y()-objPos.Y(),
+	// 	index.Z()-objPos.Z(),
+	// 	index.W(),
 	// )
 
-	// noitalsnart := digimath.MakeMatrix44(
-	// 	1, 0, 0, -translation.Entry(0, 3),
-	// 	0, 1, 0, -translation.Entry(1, 3),
-	// 	0, 0, 1, -translation.Entry(2, 3),
-	// 	0, 0, 0, 1,
-	// )
+	transInv := obj.Transform.ToMatrixInverse()
+	fmt.Printf("Transform inverse\n%s\n", transInv.Format())
 
-	// /**
-	//  * WolframAlpha <3 <3
-	//  *
-	//  * cos(y) cos(z)                        | cos(y) sin(z)                        | -sin(y)       | 0
-	//  * sin(x) sin(y) cos(z) - cos(x) sin(z) | sin(x) sin(y) sin(z) + cos(x) cos(z) | sin(x) cos(y) | 0
-	//  * cos(x) sin(y) cos(z) + sin(x) sin(z) | cos(x) sin(y) sin(z) - sin(x) cos(z) | cos(x) cos(y) | 0
-	//  * 0                                    | 0                                    | 0             | 1
-	//  */
-	// noitator := digimath.MakeMatrix44(
-	// 	math.Cos(x float64)
-	// )
-	// TODO
-	return false
+	// Revert the transform. The result are local coordinates.
+	index = obj.Transform.ToMatrixInverse().MulV(index)
+
+	fmt.Printf("Index 2 %v\n", index)
+	fmt.Printf("ObjPos %v\n", objPos)
+	fmt.Println("")
+
+	return (*obj.Obj).Intersects(
+		digimath.MakeVec2(index.X(), index.Y()),
+	)
 }

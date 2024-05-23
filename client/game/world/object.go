@@ -70,6 +70,11 @@ func (t *Transform) GetPosition() digimath.Vec3 {
 	return t.Position
 }
 
+func (t *Transform) GetDistanceFromCamera() float32 {
+	// No camera for now.
+	return -t.Position.Z()
+}
+
 func (t *Transform) ToMatrix() digimath.Matrix44 {
 	// Scale
 	//
@@ -159,6 +164,12 @@ func (t *Transform) ToMatrix2() digimath.Matrix44 {
 	return mat
 }
 
+// TODO: Do the transposition thing.
+func (t *Transform) ToMatrixInverse() digimath.Matrix44 {
+	matrix := t.ToMatrix()
+	return matrix.Inverse0001()
+}
+
 // For debugging.
 func (t *Transform) Format() string {
 	return fmt.Sprintf(
@@ -175,18 +186,20 @@ func (t *Transform) Format() string {
 // A thing in this world.
 type Placed[T WorldObject] struct {
 	Obj       *T
+	World     *World
 	Id        uint32
 	Transform Transform
 }
 
 var currentId uint32 = 0
 
-func MakePlacedDefault[T WorldObject](obj *T) Placed[T] {
+func MakePlacedDefault[T WorldObject](obj *T, world *World) Placed[T] {
 	id := currentId
 	currentId += 1
 
 	return Placed[T]{
 		Obj:       obj,
+		World:     world,
 		Id:        id,
 		Transform: MakeTransform(),
 	}

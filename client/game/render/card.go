@@ -214,7 +214,7 @@ func (r *CardRenderer) RenderCard(c *RenderableCard) {
 	gl.ActiveTexture(digigl.SpriteTextureUnit)
 	gl.BindTexture(gl.TEXTURE_2D, c.Render.TextureId)
 
-	transform := c.Transform.ToMatrix2()
+	transform := c.Transform.ToMatrix()
 	// fmt.Printf("Transform\n%s\n", transform.Format())
 
 	gl.UniformMatrix4fv(

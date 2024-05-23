@@ -28,12 +28,11 @@ type Game struct {
 }
 
 // Goes from [0..Width] coordinates to [-1..1].
-// Only X and Y are significant. The others are there for convenience.
-func (g *Game) normalizedWindowCoordinates(x, y float64) digimath.Vec4 {
+func (g *Game) normalizedWindowCoordinates(x, y float64) digimath.Vec2 {
 	normalizedX := (float32(x) * 2 / float32(g.Width)) - 1
 	normalizedY := -(float32(y)*2/float32(g.Height) - 1)
 
-	return digimath.MakeVec4(normalizedX, normalizedY, 0, 0)
+	return digimath.MakeVec2(normalizedX, normalizedY)
 }
 
 // Everything below is currently just for testing
@@ -55,12 +54,13 @@ func (g *Game) Init(context ui.InitContext) {
 		"A Blazing Storm of Metal!",
 	)
 
-	placedCard1 := world.MakePlacedDefault(&c)
-	placedCard2 := world.MakePlacedDefault(&c)
+	placedCard1 := world.MakePlacedDefault(&c, &g.World)
+	placedCard2 := world.MakePlacedDefault(&c, &g.World)
 
 	// placedCard.Transform.RotateY(0.3 * math.Pi)
 	placedCard1.Transform.TranslateX(-0.5)
 	placedCard1.Transform.TranslateZ(-2)
+	placedCard1.Transform.Scale(1.1)
 
 	placedCard2.Transform.TranslateX(0.5)
 	placedCard2.Transform.TranslateZ(-2)
@@ -80,18 +80,23 @@ func (g *Game) Tick(f ui.FrameContext) bool {
 		if eventButton, ok := event.(*gdk.EventButton); ok {
 			log.Println("Event Button", eventButton)
 
-			normalized := g.normalizedWindowCoordinates(
+			coords := g.normalizedWindowCoordinates(
 				eventButton.X(),
 				eventButton.Y(),
 			)
 
-			// TODO: Account for depth.
-			transformed := g.World.Noitcejorp.MulV(normalized)
-			fmt.Printf("Point 1\n%v\n", normalized)
-			fmt.Printf("Point 2\n%v\n", transformed)
+			fmt.Printf("Point 1\n%v\n", coords)
+			fmt.Printf("Intersects 1\n%v\n", world.Intersects(
+				*g.renderableCard1.Placed,
+				coords,
+			))
+			// fmt.Printf("Intersects 2\n%v\n", world.Intersects(
+			// 	*g.renderableCard2.Placed,
+			// 	coords,
+			// ))
 
 		} else if eventKey, ok := event.(*gdk.EventKey); ok {
-			log.Println("Event Key", eventKey, eventKey.KeyVal(), gdk.KEY_W)
+			// log.Println("Event Key", eventKey, eventKey.KeyVal(), gdk.KEY_W)
 
 			if eventKey.KeyVal() == gdk.KEY_w {
 				g.renderableCard1.Transform.RotateX(0.25 * math.Pi * f.Dtf)
@@ -99,7 +104,7 @@ func (g *Game) Tick(f ui.FrameContext) bool {
 			} else if eventKey.KeyVal() == gdk.KEY_s {
 				g.renderableCard1.Transform.RotateX(-0.25 * math.Pi * f.Dtf)
 				g.renderableCard2.Transform.RotateX(-0.25 * math.Pi * f.Dtf)
-				fmt.Printf("Rotation %v\n", g.renderableCard1.Transform.Rotation)
+				// fmt.Printf("Rotation %v\n", g.renderableCard1.Transform.Rotation)
 			} else if eventKey.KeyVal() == gdk.KEY_a {
 				g.renderableCard1.Transform.TranslateX(-0.25 * f.Dtf)
 				g.renderableCard2.Transform.TranslateX(0.25 * f.Dtf)
@@ -108,7 +113,7 @@ func (g *Game) Tick(f ui.FrameContext) bool {
 				g.renderableCard2.Transform.TranslateX(-0.25 * f.Dtf)
 			}
 		}
-		log.Println("Event found!")
+		// log.Println("Event found!")
 	}
 
 	// g.renderableCard.Transform.RotateX(0.1 * math.Pi * f.Dtf)
