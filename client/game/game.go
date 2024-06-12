@@ -6,7 +6,7 @@ import (
 	"math"
 
 	"github.com/CrimsonSarah/cto/client/digimath"
-	"github.com/CrimsonSarah/cto/client/game/card"
+	"github.com/CrimsonSarah/cto/client/game/objects/card"
 	"github.com/CrimsonSarah/cto/client/game/render"
 	"github.com/CrimsonSarah/cto/client/game/world"
 	"github.com/CrimsonSarah/cto/client/ui"
@@ -22,7 +22,7 @@ type Game struct {
 	Width  int
 	Height int
 
-	// Have to think harder about this
+	// Have to think harder about this.
 	renderableCard1 render.RenderableCard
 	renderableCard2 render.RenderableCard
 }
@@ -35,7 +35,7 @@ func (g *Game) normalizedWindowCoordinates(x, y float64) digimath.Vec2 {
 	return digimath.MakeVec2(normalizedX, normalizedY)
 }
 
-// Everything below is currently just for testing
+// Everything below is currently just for testing.
 
 func MakeGame() Game {
 	return Game{}
@@ -60,12 +60,12 @@ func (g *Game) Init(context ui.InitContext) {
 	// placedCard.Transform.RotateY(0.3 * math.Pi)
 	placedCard1.Transform.TranslateX(-0.5)
 	placedCard1.Transform.TranslateZ(-2)
-	placedCard1.Transform.Scale(1.1)
+	// placedCard1.Transform.Scale(1.1)
 
 	placedCard2.Transform.TranslateX(0.5)
 	placedCard2.Transform.TranslateZ(-2)
 
-	log.Printf("Cards @ %v | %v",
+	log.Printf("Cards @ %v | %v\n",
 		placedCard1.Transform.GetPosition(),
 		placedCard2.Transform.GetPosition(),
 	)
@@ -73,6 +73,21 @@ func (g *Game) Init(context ui.InitContext) {
 	log.Printf("Init renderable cards\n")
 	g.renderableCard1 = g.Renderer.CardRenderer.MakeRenderableCard(&placedCard1)
 	g.renderableCard2 = g.Renderer.CardRenderer.MakeRenderableCard(&placedCard2)
+
+	g.World.AddClipLine(
+		digimath.MakeVec2(0, 0),
+		digimath.MakeVec2(1, 1),
+		digimath.MakeVec3(1, 1, 0),
+	)
+	g.World.AddPoint(
+		digimath.MakeVec3(0, 0, -2),
+		digimath.MakeVec3(0, 1, 1),
+	)
+	// g.World.AddLine(
+	// 	digimath.MakeVec3(-1, -1, -2),
+	// 	digimath.MakeVec3(0, 0, -2),
+	// 	digimath.MakeVec3(1, 1, 0),
+	// )
 }
 
 func (g *Game) Tick(f ui.FrameContext) bool {
@@ -126,6 +141,8 @@ func (g *Game) Render(area *gtk.GLArea, context *gdk.GLContext) {
 	g.Renderer.Clear()
 	g.Renderer.CardRenderer.RenderCard(&g.renderableCard1)
 	g.Renderer.CardRenderer.RenderCard(&g.renderableCard2)
+
+	g.Renderer.DebugRenderer.RenderDebug(&g.World.Debug)
 }
 
 func (g *Game) Configure(newWidth, newHeight int) {

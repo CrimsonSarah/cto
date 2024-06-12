@@ -7,7 +7,7 @@ import (
 	"unsafe"
 
 	"github.com/CrimsonSarah/cto/client/digigl"
-	"github.com/CrimsonSarah/cto/client/game/card"
+	"github.com/CrimsonSarah/cto/client/game/objects/card"
 	"github.com/CrimsonSarah/cto/client/game/world"
 	"github.com/CrimsonSarah/cto/client/resources"
 	"github.com/go-gl/gl/v3.3-core/gl"
@@ -25,8 +25,9 @@ type RenderableCard struct {
 type CardRenderer struct {
 	World *world.World
 
-	VertexArrayId uint32
-	ProgramId     uint32
+	VertexArrayId  uint32
+	VertexBufferId uint32
+	ProgramId      uint32
 
 	ProjectionUniformLocation int32
 	TransformUniformLocation  int32
@@ -40,12 +41,8 @@ func (r *CardRenderer) Init(world *world.World) {
 	// Setup vertex and index buffers
 	log.Println("Initialiazing cards")
 
-	gl.GenVertexArrays(1, &r.VertexArrayId)
-	gl.BindVertexArray(r.VertexArrayId)
-
-	var vertexBufferId uint32
-	gl.GenBuffers(1, &vertexBufferId)
-	gl.BindBuffer(gl.ARRAY_BUFFER, vertexBufferId)
+	gl.GenBuffers(1, &r.VertexBufferId)
+	gl.BindBuffer(gl.ARRAY_BUFFER, r.VertexBufferId)
 
 	gl.BufferData(
 		gl.ARRAY_BUFFER,
@@ -53,6 +50,10 @@ func (r *CardRenderer) Init(world *world.World) {
 		gl.Ptr(card.CardVertices.Coords[:]),
 		gl.STATIC_DRAW,
 	)
+
+	gl.GenVertexArrays(1, &r.VertexArrayId)
+	gl.BindVertexArray(r.VertexArrayId)
+	defer gl.BindVertexArray(0)
 
 	gl.EnableVertexAttribArray(0)
 	gl.VertexAttribPointerWithOffset(
@@ -197,24 +198,25 @@ func (r *CardRenderer) getTextureId(code string) uint32 {
 func (r *CardRenderer) MakeRenderableCard(card *world.Placed[card.Card]) RenderableCard {
 	textureId := r.getTextureId(card.Obj.Code)
 
-	result := RenderableCard{
+	return RenderableCard{
 		Placed: card,
 		Render: CardRenderData{
 			TextureId: textureId,
 		},
 	}
-
-	return result
 }
 
-func (r *CardRenderer) RenderCard(c *RenderableCard) {
+func (r *CardRenderer) RenderCard(o *RenderableCard) {
+	gl.BindBuffer(gl.ARRAY_BUFFER, r.VertexBufferId)
 	gl.BindVertexArray(r.VertexArrayId)
+	defer gl.BindVertexArray(0)
+
 	gl.UseProgram(r.ProgramId)
 
 	gl.ActiveTexture(digigl.SpriteTextureUnit)
-	gl.BindTexture(gl.TEXTURE_2D, c.Render.TextureId)
+	gl.BindTexture(gl.TEXTURE_2D, o.Render.TextureId)
 
-	transform := c.Transform.ToMatrix()
+	transform := o.Transform.ToMatrix()
 	// fmt.Printf("Transform\n%s\n", transform.Format())
 
 	gl.UniformMatrix4fv(

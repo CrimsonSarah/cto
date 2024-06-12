@@ -38,8 +38,8 @@ func MakeCard(code, name string) Card {
 	}
 }
 
-// See `world/object.go`
-func (c Card) Intersects(p digimath.Vec2) bool {
+// See `world/object.go`.
+func (o Card) Intersects(p digimath.Vec2) bool {
 	bottomLeft := CardVertices.Coords[0]
 	topRight := CardVertices.Coords[2]
 

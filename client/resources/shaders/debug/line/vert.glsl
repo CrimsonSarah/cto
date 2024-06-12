@@ -1,12 +1,12 @@
 #version 330 core
 
 layout(location = 0) in vec3 in_Position;
-layout(location = 1) in vec2 in_TexCoords;
 
-out vec2 v_TexCoords;
+out vec3 v_Color;
 
 uniform mat4 u_Projection;
 uniform mat4 u_Transform;
+uniform vec3 u_Color;
 
 void main() {
   vec4 projected =
@@ -15,5 +15,5 @@ void main() {
       vec4(in_Position, 1);
 
   gl_Position = projected;
-  v_TexCoords = in_TexCoords;
+  v_Color = u_Color;
 };

@@ -6,11 +6,17 @@ import (
 	"fmt"
 
 	"github.com/CrimsonSarah/cto/client/digimath"
+	"github.com/CrimsonSarah/cto/client/game/objects/debug"
 )
 
 type World struct {
+	WindowWidth  int
+	WindowHeight int
+
 	Projection digimath.Matrix44
 	Noitcejorp digimath.Matrix44
+
+	Debug WorldDebug
 }
 
 func MakeWorld(width, height int) World {
@@ -21,13 +27,24 @@ func MakeWorld(width, height int) World {
 
 	noitcejorp := GetNoitcejorp(projection)
 
+	// Debug.
+	lineGroups := make([]*Placed[debug.DebugLines], 0)
+	points := make([]*Placed[debug.DebugPoint], 0)
+
 	return World{
 		Projection: projection,
 		Noitcejorp: noitcejorp,
+		Debug: WorldDebug{
+			LineGroups: lineGroups,
+			Points:     points,
+		},
 	}
 }
 
 func (w *World) Configure(width, height int) {
+	w.WindowWidth = width
+	w.WindowHeight = height
+
 	w.Projection = GetProjection(
 		float32(width),
 		float32(height),
