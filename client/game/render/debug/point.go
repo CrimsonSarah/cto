@@ -189,9 +189,6 @@ func (r *DebugPointRenderer) RenderDebugPoint(
 
 	gl.UseProgram(r.ProgramId)
 
-	// TODO: TEST
-	RADIUS := float32(1)
-
 	center := o.Obj.Center
 	bottomLeft := center.Add(digimath.MakeVec3(-RADIUS, -RADIUS, 0))
 	topLeft := center.Add(digimath.MakeVec3(-RADIUS, RADIUS, 0))
@@ -229,10 +226,11 @@ func (r *DebugPointRenderer) RenderDebugPoint(
 		o.Obj.Color[2],
 	)
 
-	gl.Uniform2f(
+	gl.Uniform3f(
 		r.CenterUniformLocation,
 		center[0],
 		center[1],
+		center[2],
 	)
 
 	gl.DrawElements(

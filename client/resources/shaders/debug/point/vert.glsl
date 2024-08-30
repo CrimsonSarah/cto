@@ -3,6 +3,7 @@
 layout(location = 0) in vec3 in_Position;
 
 out vec3 v_Color;
+out vec3 v_Pos; // Position in the same coordinate system as u_Center.
 
 uniform mat4 u_Projection;
 uniform mat4 u_Transform;
@@ -16,4 +17,5 @@ void main() {
 
   gl_Position = projected;
   v_Color = u_Color;
+  v_Pos = in_Position;
 };
