@@ -10,9 +10,9 @@ uniform mat4 u_Transform;
 
 void main() {
   vec4 projected =
-      u_Projection *
-      u_Transform *
-      vec4(in_Position, 1);
+    u_Projection *
+    u_Transform *
+    vec4(in_Position, 1);
 
   gl_Position = projected;
   v_TexCoords = in_TexCoords;

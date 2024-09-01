@@ -8,7 +8,7 @@ import (
 	"github.com/CrimsonSarah/cto/client/game/world"
 )
 
-// For testing matrix operations because maths is hard.
+// For testing math operations because maths is hard.
 // Maybe delete this at some point.
 
 func main() {
@@ -17,6 +17,7 @@ func main() {
 	// TestTransform()
 	// TestProjInverses()
 	// TestTransformInverses()
+	TestPlanes()
 }
 
 // Kind of emulates the vertex buffer
@@ -210,4 +211,40 @@ func TestTransformInverses() {
 	fmt.Println("")
 	fmt.Printf("ID\n%s\n", id1.Format())
 	fmt.Printf("ID\n%s\n", id2.Format())
+}
+
+func TestPlanes() {
+	angle := math.Pi / 3
+
+	// line1 := digimath.MakeLine(digimath.MakeVec3(0, 0, 0), digimath.MakeVec3(0, 0, 1))
+	plane1 := digimath.MakePlane(
+		digimath.MakeVec3(
+			0,
+			float32(math.Sin(angle)),
+			-float32(math.Cos(angle)),
+		),
+		0.5,
+	)
+
+	p0 := digimath.MakeVec3(0, 0, 1)
+	p1 := digimath.MakeVec3(1, 1, float32(math.Sqrt(3))+1)
+	p2 := digimath.MakeVec3(1, -1, -float32(math.Sqrt(3))+1)
+
+	fmt.Printf("for p0: %f.\n", plane1.Normal().Dot(p0))
+
+	fmt.Printf("p0: %f. p1: %f. p2: %f.\n",
+		plane1.Dot(p0.AsPoint()),
+		plane1.Dot(p1.AsPoint()),
+		plane1.Dot(p2.AsPoint()),
+	)
+
+	line1 := digimath.MakeLine(
+		digimath.MakeVec3(0, -1, 0),
+		digimath.MakeVec3(0, 0, 1),
+	)
+	_, p1p := digimath.IntersectLinePlane(line1, plane1)
+
+	fmt.Printf("p1p: %f.\n",
+		p1p,
+	)
 }

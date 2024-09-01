@@ -73,21 +73,6 @@ func (g *Game) Init(context ui.InitContext) {
 	log.Printf("Init renderable cards\n")
 	g.renderableCard1 = g.Renderer.CardRenderer.MakeRenderableCard(&placedCard1)
 	g.renderableCard2 = g.Renderer.CardRenderer.MakeRenderableCard(&placedCard2)
-
-	g.World.AddLine(
-		digimath.MakeVec3(-0.5, 0, -2),
-		digimath.MakeVec3(0.5, 0, -2),
-		digimath.MakeVec3(1, 1, 0),
-	)
-	g.World.AddPoint(
-		digimath.MakeVec3(0.5, 0, -2),
-		digimath.MakeVec3(0, 1, 1),
-	)
-	// g.World.AddLine(
-	// 	digimath.MakeVec3(-1, -1, -2),
-	// 	digimath.MakeVec3(0, 0, -2),
-	// 	digimath.MakeVec3(1, 1, 0),
-	// )
 }
 
 func (g *Game) Tick(f ui.FrameContext) bool {

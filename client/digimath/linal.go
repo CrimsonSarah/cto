@@ -65,6 +65,18 @@ func (v Vec3) Scale(amount float32) Vec3 {
 	return MakeVec3(v.X()*amount, v.Y()*amount, v.Z()*amount)
 }
 
+func (v Vec3) MagnitudeSquared() float32 {
+	return v[0]*v[0] + v[1]*v[1] + v[2]*v[2]
+}
+
+func (v Vec3) Magnitude() float32 {
+	return float32(math.Sqrt(float64(v.MagnitudeSquared())))
+}
+
+func (v Vec3) Normalized() Vec3 {
+	return v.Scale(1 / v.Magnitude())
+}
+
 func (v1 Vec3) Add(v2 Vec3) Vec3 {
 	return MakeVec3(v1.X()+v2.X(), v1.Y()+v2.Y(), v1.Z()+v2.Z())
 }
@@ -83,6 +95,14 @@ func (v1 Vec3) Cross(v2 Vec3) Vec3 {
 		v1.Z()*v2.X()-v1.X()*v2.Z(),
 		v1.X()*v2.Y()-v1.Y()*v2.X(),
 	)
+}
+
+func (v1 Vec3) AsPoint() Vec4 {
+	return MakeVec4(v1.X(), v1.Y(), v1.Z(), 1)
+}
+
+func (v1 Vec3) AsDirection() Vec4 {
+	return MakeVec4(v1.X(), v1.Y(), v1.Z(), 0)
 }
 
 // Vec4
@@ -131,6 +151,10 @@ func (v1 Vec4) Add(v2 Vec4) Vec4 {
 
 func (v1 Vec4) Sub(v2 Vec4) Vec4 {
 	return MakeVec4(v1.X()-v2.X(), v1.Y()-v2.Y(), v1.Z()-v2.Z(), v1.W()-v2.W())
+}
+
+func (v1 Vec4) Dot(v2 Vec4) float32 {
+	return v1.X()*v2.X() + v1.Y()*v2.Y() + v1.Z()*v2.Z() + v1.W()*v2.W()
 }
 
 // Matrix33

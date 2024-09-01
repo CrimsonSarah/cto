@@ -1,10 +1,6 @@
 package world
 
 import (
-	// "math"
-
-	"fmt"
-
 	"github.com/CrimsonSarah/cto/client/digimath"
 	"github.com/CrimsonSarah/cto/client/game/objects/debug"
 )
@@ -58,52 +54,46 @@ func Intersects[T WorldObject](
 	obj Placed[T],
 	p digimath.Vec2,
 ) bool {
-
-	index := digimath.MakeVec4(
+	ray0 := digimath.MakeVec4(
 		p.X(), p.Y(), 0, 1,
 	)
 
-	fmt.Println("")
-	// Revert depth.
-	// TODO: Rotation should probably have an effect.
-	depth := obj.Transform.GetDistanceFromCamera()
-	index = index.Scale(depth)
-	fmt.Printf("Index 0 %v\n", index)
+	ray1 := digimath.MakeVec4(
+		p.X(), p.Y(), 1, 1,
+	)
 
-	// We need to find Z such that, after multiplying by the projection
-	// inverse, W = 1.
-	// This is just how the projection computes Z.
-	objPos := obj.Transform.GetPosition()
+	// Revert the projection. The result are world coordinates.
+	ray0 = obj.World.Noitcejorp.MulV(ray0)
+	ray0 = ray0.Scale(1 / ray0.W())
 
-	projectedZ :=
-		objPos.Z()*(-2/(PROJECTION_FAR-PROJECTION_NEAR)) -
-			((PROJECTION_FAR + PROJECTION_NEAR) / (PROJECTION_FAR - PROJECTION_NEAR))
-	index.SetZ(projectedZ)
+	ray1 = obj.World.Noitcejorp.MulV(ray1)
+	ray1 = ray1.Scale(1 / ray1.W())
 
-	// With the correct Z and W in place, invert the projection.
-	// The result are world coordinates.
-	index = obj.World.Noitcejorp.MulV(index)
+	// Unnormalized. Don't think it's important here.
+	line := digimath.MakeLine(
+		digimath.Vec3From4(ray0), digimath.Vec3From4(ray1),
+	)
 
-	fmt.Printf("Index 1 %v\n", index)
+	rotation := obj.Transform.Rotation
+	normal := digimath.Matrix44RotateX(rotation.X()).
+		Mul(digimath.Matrix44RotateY(rotation.Y())).
+		MulV(digimath.MakeVec4(0, 0, 1, 0))
 
-	// index = digimath.MakeVec4(
-	// 	index.X()-objPos.X(),
-	// 	index.Y()-objPos.Y(),
-	// 	index.Z()-objPos.Z(),
-	// 	index.W(),
-	// )
+	d := -normal.Dot(obj.Transform.Position.AsPoint())
+
+	plane := digimath.MakePlane(digimath.Vec3From4(normal), d)
+	intersects, p2 := digimath.IntersectLinePlane(line, plane)
+
+	if !intersects {
+		return false
+	}
 
 	transInv := obj.Transform.ToMatrixInverse()
-	fmt.Printf("Transform inverse\n%s\n", transInv.Format())
 
 	// Revert the transform. The result are local coordinates.
-	index = obj.Transform.ToMatrixInverse().MulV(index)
-
-	fmt.Printf("Index 2 %v\n", index)
-	fmt.Printf("ObjPos %v\n", objPos)
-	fmt.Println("")
+	p2 = digimath.Vec3From4(transInv.MulV(p2.AsPoint()))
 
 	return (*obj.Obj).Intersects(
-		digimath.MakeVec2(index.X(), index.Y()),
+		digimath.MakeVec2(p2.X(), p2.Y()),
 	)
 }
