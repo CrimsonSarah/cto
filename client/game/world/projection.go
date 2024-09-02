@@ -10,7 +10,7 @@ const PROJECTION_FOV_Y float32 = 60
 const PROJECTION_FAR float32 = 50
 const PROJECTION_NEAR float32 = 1
 
-// "Weak" perspective projection, according to Wikipedia
+// "Weak" perspective projection, according to Wikipedia.
 func GetProjection(areaWidth, areaHeight float32) digimath.Matrix44 {
 	aspectRatio := max(areaWidth, areaHeight) / min(areaWidth, areaHeight)
 

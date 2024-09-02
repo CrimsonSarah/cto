@@ -174,7 +174,7 @@ func (t *Transform) ToMatrixInverse() digimath.Matrix44 {
 func (t *Transform) Format() string {
 	return fmt.Sprintf(
 		""+
-			"Scale:\n%d\n\n"+
+			"Scale:\n%f\n\n"+
 			"Rotation:\n%v\n\n"+
 			"Translation:\nvs",
 		t.ScaleFactor,

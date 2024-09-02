@@ -23,8 +23,10 @@ type DebugLineRenderer struct {
 	ProgramId      uint32
 
 	ProjectionUniformLocation int32
+	CameraUniformLocation     int32
 	TransformUniformLocation  int32
-	ColorUniformLocation      int32
+
+	ColorUniformLocation int32
 
 	CurrentLineCount int
 }
@@ -90,6 +92,11 @@ func (r *DebugLineRenderer) Init(world *world.World) {
 		1,
 		false,
 		&world.Projection[0],
+	)
+
+	r.CameraUniformLocation = gl.GetUniformLocation(
+		r.ProgramId,
+		gl.Str("u_Camera\000"),
 	)
 
 	r.TransformUniformLocation = gl.GetUniformLocation(
@@ -181,6 +188,15 @@ func (r *DebugLineRenderer) RenderDebugLine(
 	)
 
 	transform := o.Lines.Transform.ToMatrix()
+	camera := o.Lines.World.CameraMatrix()
+
+	gl.UniformMatrix4fv(
+		r.CameraUniformLocation,
+		1,
+		false,
+		&camera[0],
+	)
+
 	gl.UniformMatrix4fv(
 		r.TransformUniformLocation,
 		1,

@@ -5,6 +5,7 @@ import (
 
 	"github.com/CrimsonSarah/cto/client/digidata"
 	"github.com/CrimsonSarah/cto/client/digigl"
+	"github.com/CrimsonSarah/cto/client/events"
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 )
@@ -46,6 +47,8 @@ type Game interface {
 	Tick(FrameContext) bool
 
 	Render(area *gtk.GLArea, context *gdk.GLContext)
+
+	Configure(newWidth, newHeight int)
 }
 
 // Ensures that the actual Game receives convenient data to work with
@@ -125,7 +128,7 @@ func (w *GameWrapper) Render(area *gtk.GLArea, context *gdk.GLContext) bool {
 	return true
 }
 
-// TODO: Error handling
+// TODO: Error handling.
 func GameWidgetNew(game Game) *gtk.GLArea {
 	glArea, err := gtk.GLAreaNew()
 
@@ -142,17 +145,42 @@ func GameWidgetNew(game Game) *gtk.GLArea {
 	glArea.Connect("render", wrapper.Render)
 	glArea.AddTickCallback(wrapper.Tick)
 
-	glArea.AddEvents(int(gdk.BUTTON_PRESS_MASK | gdk.KEY_PRESS_MASK))
+	glArea.AddEvents(int(
+		gdk.BUTTON_PRESS_MASK |
+			gdk.BUTTON_RELEASE_MASK |
+			gdk.KEY_PRESS_MASK |
+			gdk.KEY_RELEASE_MASK |
+			gdk.POINTER_MOTION_MASK,
+	))
+
+	glArea.Connect("motion-notify-event", func(area *gtk.GLArea, event *gdk.Event) {
+		keyEvent := events.FromGdkPointerMotion(event)
+		wrapper.EventQueue.Enqueue(keyEvent)
+	})
 
 	glArea.Connect("button-press-event", func(area *gtk.GLArea, event *gdk.Event) {
-		buttonEvent := gdk.EventButtonNewFromEvent(event)
+		buttonEvent := events.FromGdkButtonPress(event)
+		wrapper.EventQueue.Enqueue(buttonEvent)
+	})
+
+	glArea.Connect("button-release-event", func(area *gtk.GLArea, event *gdk.Event) {
+		buttonEvent := events.FromGdkButtonRelease(event)
 		wrapper.EventQueue.Enqueue(buttonEvent)
 	})
 
 	glArea.SetCanFocus(true)
 	glArea.Connect("key-press-event", func(area *gtk.GLArea, event *gdk.Event) {
-		keyEvent := gdk.EventKeyNewFromEvent(event)
+		keyEvent := events.FromGdkKeyPress(event)
 		wrapper.EventQueue.Enqueue(keyEvent)
+	})
+
+	glArea.Connect("key-release-event", func(area *gtk.GLArea, event *gdk.Event) {
+		keyEvent := events.FromGdkKeyRelease(event)
+		wrapper.EventQueue.Enqueue(keyEvent)
+	})
+
+	glArea.Connect("resize", func(area *gtk.GLArea, width, height int) {
+		game.Configure(width, height)
 	})
 
 	return glArea

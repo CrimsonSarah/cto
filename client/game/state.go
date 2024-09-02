@@ -1,15 +1,15 @@
 package game
 
-import (
-	"github.com/CrimsonSarah/cto/client/game/render"
-)
+import "github.com/CrimsonSarah/cto/client/ui"
 
-// Source of truth.
-type GameState struct {
-	// What cards are being seen. Used to keep track of loaded
-	// textures, and possibly other things.
-	Cards      []render.RenderableCard
-	CardCounts map[string]uint8 // Keys are codes, not IDs
+type GameState interface {
+	Init(game *Game)
+	Tick(f ui.FrameContext)
+	Destroy()
+}
 
-	Hand []string // These are IDs
+func (game *Game) ToState(state GameState) {
+	game.State.Destroy()
+	state.Init(game)
+	game.State = state
 }

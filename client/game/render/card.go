@@ -30,6 +30,7 @@ type CardRenderer struct {
 	ProgramId      uint32
 
 	ProjectionUniformLocation int32
+	CameraUniformLocation     int32
 	TransformUniformLocation  int32
 
 	CardTextures map[string]uint32
@@ -113,6 +114,11 @@ func (r *CardRenderer) Init(world *world.World) {
 		1,
 		false,
 		&world.Projection[0],
+	)
+
+	r.CameraUniformLocation = gl.GetUniformLocation(
+		r.ProgramId,
+		gl.Str("u_Camera\000"),
 	)
 
 	r.TransformUniformLocation = gl.GetUniformLocation(
@@ -217,13 +223,20 @@ func (r *CardRenderer) RenderCard(o *RenderableCard) {
 	gl.BindTexture(gl.TEXTURE_2D, o.Render.TextureId)
 
 	transform := o.Transform.ToMatrix()
-	// fmt.Printf("Transform\n%s\n", transform.Format())
+	camera := o.World.CameraMatrix()
 
 	gl.UniformMatrix4fv(
 		r.TransformUniformLocation,
 		1,
 		false,
 		&transform[0],
+	)
+
+	gl.UniformMatrix4fv(
+		r.CameraUniformLocation,
+		1,
+		false,
+		&camera[0],
 	)
 
 	gl.DrawElements(

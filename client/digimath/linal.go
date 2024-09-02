@@ -52,13 +52,22 @@ func Vec3From4(vec Vec4) Vec3 {
 func (v Vec3) X() float32 {
 	return v[0]
 }
+func (v *Vec3) SetX(x float32) {
+	v[0] = x
+}
 
 func (v Vec3) Y() float32 {
 	return v[1]
 }
+func (v *Vec3) SetY(y float32) {
+	v[1] = y
+}
 
 func (v Vec3) Z() float32 {
 	return v[2]
+}
+func (v *Vec3) SetZ(z float32) {
+	v[2] = z
 }
 
 func (v Vec3) Scale(amount float32) Vec3 {
@@ -173,11 +182,72 @@ func MakeMatrix33(
 	})
 }
 
+// 1 indexed. `i` and `j` should never be less than 1.
+// There are no bound checks of course.
+func (m Matrix33) Entry(i, j uintptr) float32 {
+	return m[(j-1)*3+(i-1)]
+}
+
+func (m Matrix33) MulV(v Vec3) Vec3 {
+	me := func(i uintptr) float32 {
+		return m.Entry(i, 1)*v.X() +
+			m.Entry(i, 2)*v.Y() +
+			m.Entry(i, 3)*v.Z()
+	}
+
+	return MakeVec3(
+		me(1),
+		me(2),
+		me(3),
+	)
+}
+
 func Matrix33Id() Matrix33 {
 	return MakeMatrix33(
 		1, 0, 0,
 		0, 1, 0,
 		0, 0, 1,
+	)
+}
+
+func Matrix33Scale(amount float32) Matrix33 {
+	return MakeMatrix33(
+		amount, 0, 0,
+		0, amount, 0,
+		0, 0, amount,
+	)
+}
+
+func Matrix33RotateZ(amount float32) Matrix33 {
+	cos := float32(math.Cos(float64(amount)))
+	sin := float32(math.Sin(float64(amount)))
+
+	return MakeMatrix33(
+		cos, -sin, 0,
+		sin, cos, 0,
+		0, 0, 1,
+	)
+}
+
+func Matrix33RotateY(amount float32) Matrix33 {
+	cos := float32(math.Cos(float64(amount)))
+	sin := float32(math.Sin(float64(amount)))
+
+	return MakeMatrix33(
+		cos, 0, sin,
+		0, 1, 0,
+		-sin, 0, cos,
+	)
+}
+
+func Matrix33RotateX(amount float32) Matrix33 {
+	cos := float32(math.Cos(float64(amount)))
+	sin := float32(math.Sin(float64(amount)))
+
+	return MakeMatrix33(
+		1, 0, 0,
+		0, cos, -sin,
+		0, sin, cos,
 	)
 }
 

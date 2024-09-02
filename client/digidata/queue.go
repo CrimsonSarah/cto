@@ -1,6 +1,5 @@
 package digidata
 
-// TODO: Is there a way to specify this as a type parameter alongside T?
 const QUEUE_SIZE byte = 5
 
 // Fixed-size using a circular buffer.

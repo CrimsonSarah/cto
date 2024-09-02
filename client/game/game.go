@@ -3,9 +3,10 @@ package game
 import (
 	"fmt"
 	"log"
-	"math"
 
+	"github.com/CrimsonSarah/cto/client/digidata"
 	"github.com/CrimsonSarah/cto/client/digimath"
+	"github.com/CrimsonSarah/cto/client/events"
 	"github.com/CrimsonSarah/cto/client/game/objects/card"
 	"github.com/CrimsonSarah/cto/client/game/render"
 	"github.com/CrimsonSarah/cto/client/game/world"
@@ -15,9 +16,11 @@ import (
 )
 
 type Game struct {
-	State    GameState
+	Data     GameData
 	World    world.World
 	Renderer render.Renderer
+
+	State GameState
 
 	Width  int
 	Height int
@@ -28,7 +31,7 @@ type Game struct {
 }
 
 // Goes from [0..Width] coordinates to [-1..1].
-func (g *Game) normalizedWindowCoordinates(x, y float64) digimath.Vec2 {
+func (g *Game) normalizedWindowCoordinates(x, y float32) digimath.Vec2 {
 	normalizedX := (float32(x) * 2 / float32(g.Width)) - 1
 	normalizedY := -(float32(y)*2/float32(g.Height) - 1)
 
@@ -48,6 +51,10 @@ func (g *Game) Init(context ui.InitContext) {
 
 	g.Width = context.Width
 	g.Height = context.Height
+
+	state := GameDefaultState{}
+	g.State = &state
+	g.State.Init(g)
 
 	c := card.MakeCard(
 		"BT5-103",
@@ -76,48 +83,30 @@ func (g *Game) Init(context ui.InitContext) {
 }
 
 func (g *Game) Tick(f ui.FrameContext) bool {
-	for event, ok := f.Events.Dequeue(); ok; event, ok = f.Events.Dequeue() {
-		if eventButton, ok := event.(*gdk.EventButton); ok {
-			log.Println("Event Button", eventButton)
+	// Unhandled root events will go here for the current state to
+	// handle.
+	stateEvents := digidata.MakeQueue[any]()
 
+	for ev, ok := f.Events.Dequeue(); ok; ev, ok = f.Events.Dequeue() {
+		if event, ok := ev.(events.PointerButtonDownEvent); ok {
 			coords := g.normalizedWindowCoordinates(
-				eventButton.X(),
-				eventButton.Y(),
+				event.X,
+				event.Y,
 			)
 
-			fmt.Printf("Point 1\n%v\n", coords)
 			fmt.Printf("Intersects 1\n%v\n", world.Intersects(
 				*g.renderableCard1.Placed,
 				coords,
 			))
-			// fmt.Printf("Intersects 2\n%v\n", world.Intersects(
-			// 	*g.renderableCard2.Placed,
-			// 	coords,
-			// ))
 
-		} else if eventKey, ok := event.(*gdk.EventKey); ok {
-			// log.Println("Event Key", eventKey, eventKey.KeyVal(), gdk.KEY_W)
-
-			if eventKey.KeyVal() == gdk.KEY_w {
-				g.renderableCard1.Transform.RotateX(0.25 * math.Pi * f.Dtf)
-				g.renderableCard2.Transform.RotateX(0.25 * math.Pi * f.Dtf)
-			} else if eventKey.KeyVal() == gdk.KEY_s {
-				g.renderableCard1.Transform.RotateX(-0.25 * math.Pi * f.Dtf)
-				g.renderableCard2.Transform.RotateX(-0.25 * math.Pi * f.Dtf)
-				// fmt.Printf("Rotation %v\n", g.renderableCard1.Transform.Rotation)
-			} else if eventKey.KeyVal() == gdk.KEY_a {
-				g.renderableCard1.Transform.TranslateX(-0.25 * f.Dtf)
-				g.renderableCard2.Transform.TranslateX(0.25 * f.Dtf)
-			} else if eventKey.KeyVal() == gdk.KEY_d {
-				g.renderableCard1.Transform.TranslateX(0.25 * f.Dtf)
-				g.renderableCard2.Transform.TranslateX(-0.25 * f.Dtf)
-			}
+			stateEvents.Enqueue(ev)
+		} else {
+			stateEvents.Enqueue(ev)
 		}
-		// log.Println("Event found!")
 	}
 
-	// g.renderableCard.Transform.RotateX(0.1 * math.Pi * f.Dtf)
-	// log.Printf("Transform\n%s\n", g.renderableCard.Transform.Format())
+	f.Events = &stateEvents
+	g.State.Tick(f)
 
 	return true
 }

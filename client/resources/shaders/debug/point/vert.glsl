@@ -6,12 +6,14 @@ out vec3 v_Color;
 out vec3 v_Pos; // Position in the same coordinate system as u_Center.
 
 uniform mat4 u_Projection;
+uniform mat4 u_Camera;
 uniform mat4 u_Transform;
 uniform vec3 u_Color;
 
 void main() {
   vec4 projected =
     u_Projection *
+    u_Camera *
     u_Transform *
     vec4(in_Position, 1);
 

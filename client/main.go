@@ -6,7 +6,6 @@ import (
 
 	"github.com/CrimsonSarah/cto/client/game"
 	"github.com/CrimsonSarah/cto/client/ui"
-	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/glib"
 	"github.com/gotk3/gotk3/gtk"
 )
@@ -30,7 +29,7 @@ func onActivate(application *gtk.Application) {
 
 	appWindow, err := gtk.ApplicationWindowNew(application)
 	if err != nil {
-		log.Fatal("Could not create application window.", err)
+		log.Fatal("Could not create application window. ", err)
 	}
 
 	appWindow.SetTitle("CTO")
@@ -38,7 +37,7 @@ func onActivate(application *gtk.Application) {
 
 	css, err := gtk.CssProviderNew()
 	if err != nil {
-		log.Fatal("Unable to create CSS provider:", err)
+		log.Fatal("Unable to create CSS provider: ", err)
 	}
 
 	// https://github.com/gotk3/gotk3/pull/926
@@ -51,14 +50,6 @@ func onActivate(application *gtk.Application) {
 
 	game := game.MakeGame()
 	gameWidget := ui.GameWidgetNew(&game)
-
-	appWindow.Connect("configure-event", func(window *gtk.ApplicationWindow, event *gdk.Event) {
-		// width := gameWidget.GetAllocatedWidth()
-		// height := gameWidget.GetAllocatedHeight()
-		configEvent := gdk.EventConfigureNewFromEvent(event)
-
-		game.Configure(configEvent.Width(), configEvent.Height())
-	})
 
 	appWindow.Add(gameWidget)
 	appWindow.ShowAll()

@@ -23,8 +23,10 @@ type DebugPointRenderer struct {
 	VertexBufferId uint32
 	ProgramId      uint32
 
-	ProjectionUniformLocation       int32
-	TransformUniformLocation        int32
+	ProjectionUniformLocation int32
+	CameraUniformLocation     int32
+	TransformUniformLocation  int32
+
 	ColorUniformLocation            int32
 	CenterUniformLocation           int32
 	RadiusUniformLocation           int32
@@ -99,6 +101,11 @@ func (r *DebugPointRenderer) Init(world *world.World) {
 		1,
 		false,
 		&world.Projection[0],
+	)
+
+	r.CameraUniformLocation = gl.GetUniformLocation(
+		r.ProgramId,
+		gl.Str("u_Camera\000"),
 	)
 
 	r.TransformUniformLocation = gl.GetUniformLocation(
@@ -212,6 +219,15 @@ func (r *DebugPointRenderer) RenderDebugPoint(
 	)
 
 	transform := o.Transform.ToMatrix()
+	camera := o.World.CameraMatrix()
+
+	gl.UniformMatrix4fv(
+		r.CameraUniformLocation,
+		1,
+		false,
+		&camera[0],
+	)
+
 	gl.UniformMatrix4fv(
 		r.TransformUniformLocation,
 		1,

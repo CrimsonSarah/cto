@@ -6,11 +6,13 @@ layout(location = 1) in vec2 in_TexCoords;
 out vec2 v_TexCoords;
 
 uniform mat4 u_Projection;
+uniform mat4 u_Camera;
 uniform mat4 u_Transform;
 
 void main() {
   vec4 projected =
     u_Projection *
+    u_Camera *
     u_Transform *
     vec4(in_Position, 1);
 

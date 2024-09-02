@@ -9,6 +9,8 @@ type World struct {
 	WindowWidth  int
 	WindowHeight int
 
+	Camera Transform
+
 	Projection digimath.Matrix44
 	Noitcejorp digimath.Matrix44
 
@@ -28,6 +30,7 @@ func MakeWorld(width, height int) World {
 	points := make([]*Placed[debug.DebugPoint], 0)
 
 	return World{
+		Camera:     MakeTransform(),
 		Projection: projection,
 		Noitcejorp: noitcejorp,
 		Debug: WorldDebug{
@@ -48,8 +51,30 @@ func (w *World) Configure(width, height int) {
 	w.Noitcejorp = GetNoitcejorp(w.Projection)
 }
 
+func (w *World) CameraMatrix() digimath.Matrix44 {
+	return w.Camera.ToMatrixInverse()
+}
+
+func (w *World) AremacMatrix() digimath.Matrix44 {
+	return w.Camera.ToMatrix()
+}
+
+func (w *World) CameraForward() digimath.Vec3 {
+	return digimath.Vec3From4(w.AremacMatrix().MulV(
+		digimath.MakeVec3(0, 0, -1).AsDirection(),
+	))
+}
+
+// Removes the Y component.
+func (w *World) CameraForwardFlat() digimath.Vec3 {
+	forward := w.CameraForward()
+	forward.SetY(0)
+	return forward.Normalized()
+}
+
 // `p` should be in the range [-1, +1], where X -> -1 is left and
 // Y -> -1 is down.
+// Currently only works for quads. TODO: Organize.
 func Intersects[T WorldObject](
 	obj Placed[T],
 	p digimath.Vec2,
@@ -62,12 +87,17 @@ func Intersects[T WorldObject](
 		p.X(), p.Y(), 1, 1,
 	)
 
-	// Revert the projection. The result are world coordinates.
+	// Revert the projection. The result are camera coordinates.
 	ray0 = obj.World.Noitcejorp.MulV(ray0)
 	ray0 = ray0.Scale(1 / ray0.W())
 
 	ray1 = obj.World.Noitcejorp.MulV(ray1)
 	ray1 = ray1.Scale(1 / ray1.W())
+
+	// Revert the camera. The result are world coordinates.
+	aremac := obj.World.AremacMatrix()
+	ray0 = aremac.MulV(ray0)
+	ray1 = aremac.MulV(ray1)
 
 	// Unnormalized. Don't think it's important here.
 	line := digimath.MakeLine(
