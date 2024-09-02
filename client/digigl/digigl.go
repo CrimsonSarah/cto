@@ -34,8 +34,13 @@ func DigiGLInit() error {
 	gl.BlendEquation(gl.FUNC_ADD)
 	gl.BlendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA)
 
+	gl.Enable(gl.DEPTH_TEST)
+	gl.DepthFunc(gl.LESS)
+
 	gl.DebugMessageCallback(openGlDebug, nil)
 	gl.DebugMessageControl(gl.DONT_CARE, gl.DONT_CARE, gl.DONT_CARE, 0, nil, true)
+
+	gl.ClearColor(0, 0, 0, 0)
 
 	TextureInit()
 	log.Println("DigiGL Initialized")

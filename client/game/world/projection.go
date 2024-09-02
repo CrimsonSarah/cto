@@ -7,7 +7,7 @@ import (
 // In degrees.
 const PROJECTION_FOV_Y float32 = 60
 
-const PROJECTION_FAR float32 = 50
+const PROJECTION_FAR float32 = 20
 const PROJECTION_NEAR float32 = 1
 
 // "Weak" perspective projection, according to Wikipedia.

@@ -26,5 +26,5 @@ func (r *Renderer) Configure() {
 
 func (r *Renderer) Clear() {
 	gl.ClearColor(0, 0, 0, 0)
-	gl.Clear(gl.COLOR_BUFFER_BIT)
+	gl.Clear(gl.COLOR_BUFFER_BIT | gl.DEPTH_BUFFER_BIT)
 }

@@ -214,33 +214,31 @@ func TestTransformInverses() {
 }
 
 func TestPlanes() {
-	angle := math.Pi / 3
-
 	// line1 := digimath.MakeLine(digimath.MakeVec3(0, 0, 0), digimath.MakeVec3(0, 0, 1))
 	plane1 := digimath.MakePlane(
 		digimath.MakeVec3(
 			0,
-			float32(math.Sin(angle)),
-			-float32(math.Cos(angle)),
+			0,
+			1,
 		),
-		0.5,
+		2,
 	)
 
-	p0 := digimath.MakeVec3(0, 0, 1)
-	p1 := digimath.MakeVec3(1, 1, float32(math.Sqrt(3))+1)
-	p2 := digimath.MakeVec3(1, -1, -float32(math.Sqrt(3))+1)
+	// p0 := digimath.MakeVec3(0, 0, 1)
+	// p1 := digimath.MakeVec3(1, 1, float32(math.Sqrt(3))+1)
+	// p2 := digimath.MakeVec3(1, -1, -float32(math.Sqrt(3))+1)
 
-	fmt.Printf("for p0: %f.\n", plane1.Normal().Dot(p0))
+	// fmt.Printf("for p0: %f.\n", plane1.Normal().Dot(p0))
 
-	fmt.Printf("p0: %f. p1: %f. p2: %f.\n",
-		plane1.Dot(p0.AsPoint()),
-		plane1.Dot(p1.AsPoint()),
-		plane1.Dot(p2.AsPoint()),
-	)
+	// fmt.Printf("p0: %f. p1: %f. p2: %f.\n",
+	// 	plane1.Dot(p0.AsPoint()),
+	// 	plane1.Dot(p1.AsPoint()),
+	// 	plane1.Dot(p2.AsPoint()),
+	// )
 
 	line1 := digimath.MakeLine(
-		digimath.MakeVec3(0, -1, 0),
-		digimath.MakeVec3(0, 0, 1),
+		digimath.MakeVec3(0, 0, 10),
+		digimath.MakeVec3(0.0001, 0, 20),
 	)
 	_, p1p := digimath.IntersectLinePlane(line1, plane1)
 

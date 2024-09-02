@@ -40,8 +40,8 @@ func MakeCard(code, name string) Card {
 
 // See `world/object.go`.
 func (o Card) Intersects(p digimath.Vec2) bool {
-	bottomLeft := CardVertices.Coords[0]
-	topRight := CardVertices.Coords[2]
+	bottomLeft := CardVertices.Coords[3]
+	topRight := CardVertices.Coords[1]
 
 	return p.X() >= bottomLeft.X() && p.X() <= topRight.X() &&
 		p.Y() >= bottomLeft.Y() && p.Y() <= topRight.Y()

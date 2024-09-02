@@ -101,23 +101,24 @@ func Intersects[T WorldObject](
 
 	// Unnormalized. Don't think it's important here.
 	line := digimath.MakeLine(
-		digimath.Vec3From4(ray0), digimath.Vec3From4(ray1),
+		digimath.Vec3From4(ray0), digimath.Vec3From4(ray1.Sub(ray0)),
 	)
 
 	rotation := obj.Transform.Rotation
-	normal := digimath.Matrix44RotateX(rotation.X()).
-		Mul(digimath.Matrix44RotateY(rotation.Y())).
-		MulV(digimath.MakeVec4(0, 0, 1, 0))
+	normal := digimath.Matrix33RotateX(rotation.X()).
+		Mul(digimath.Matrix33RotateY(rotation.Y())).
+		MulV(digimath.MakeVec3(0, 0, 1))
 
-	d := -normal.Dot(obj.Transform.Position.AsPoint())
+	d := -normal.Dot(obj.Transform.Position)
 
-	plane := digimath.MakePlane(digimath.Vec3From4(normal), d)
+	plane := digimath.MakePlane(normal, d)
 	intersects, p2 := digimath.IntersectLinePlane(line, plane)
 
 	if !intersects {
 		return false
 	}
 
+	obj.World.AddPoint(p2, digimath.MakeVec3(1, 1, 0))
 	transInv := obj.Transform.ToMatrixInverse()
 
 	// Revert the transform. The result are local coordinates.

@@ -188,6 +188,20 @@ func (m Matrix33) Entry(i, j uintptr) float32 {
 	return m[(j-1)*3+(i-1)]
 }
 
+func (m Matrix33) Mul(other Matrix33) Matrix33 {
+	me := func(i, j uintptr) float32 {
+		return m.Entry(i, 1)*other.Entry(1, j) +
+			m.Entry(i, 2)*other.Entry(2, j) +
+			m.Entry(i, 3)*other.Entry(3, j)
+	}
+
+	return MakeMatrix33(
+		me(1, 1), me(1, 2), me(1, 3),
+		me(2, 1), me(2, 2), me(2, 3),
+		me(3, 1), me(3, 2), me(3, 3),
+	)
+}
+
 func (m Matrix33) MulV(v Vec3) Vec3 {
 	me := func(i uintptr) float32 {
 		return m.Entry(i, 1)*v.X() +

@@ -3,6 +3,7 @@ package game
 import (
 	"fmt"
 	"log"
+	"math"
 
 	"github.com/CrimsonSarah/cto/client/digidata"
 	"github.com/CrimsonSarah/cto/client/digimath"
@@ -71,6 +72,12 @@ func (g *Game) Init(context ui.InitContext) {
 
 	placedCard2.Transform.TranslateX(0.5)
 	placedCard2.Transform.TranslateZ(-2)
+	placedCard2.Transform.RotateY(math.Pi / 2)
+
+	g.World.AddClipPoint(
+		digimath.MakeVec2(0, 0),
+		digimath.MakeVec3(0.5, 0.5, 0.5),
+	)
 
 	log.Printf("Cards @ %v | %v\n",
 		placedCard1.Transform.GetPosition(),
@@ -87,6 +94,10 @@ func (g *Game) Tick(f ui.FrameContext) bool {
 	// handle.
 	stateEvents := digidata.MakeQueue[any]()
 
+	propagate := func(ev any) {
+		stateEvents.Enqueue(ev)
+	}
+
 	for ev, ok := f.Events.Dequeue(); ok; ev, ok = f.Events.Dequeue() {
 		if event, ok := ev.(events.PointerButtonDownEvent); ok {
 			coords := g.normalizedWindowCoordinates(
@@ -99,9 +110,17 @@ func (g *Game) Tick(f ui.FrameContext) bool {
 				coords,
 			))
 
-			stateEvents.Enqueue(ev)
+			propagate(ev)
+		} else if event, ok := ev.(events.KeyDownEvent); ok {
+			if event.Key == gdk.KEY_J {
+				g.renderableCard1.Transform.RotateX(0.25 * math.Pi * f.Dtf)
+			} else if event.Key == gdk.KEY_K {
+				g.renderableCard1.Transform.RotateX(-0.25 * math.Pi * f.Dtf)
+			} else {
+				propagate(ev)
+			}
 		} else {
-			stateEvents.Enqueue(ev)
+			propagate(ev)
 		}
 	}
 
