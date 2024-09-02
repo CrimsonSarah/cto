@@ -128,6 +128,40 @@ func (r *CardRenderer) Init(world *world.World) {
 
 	// Filled on demand
 	r.CardTextures = make(map[string]uint32)
+
+	texSpriteLocation := gl.GetUniformLocation(
+		r.ProgramId,
+		gl.Str("texSprite\000"),
+	)
+
+	gl.Uniform1i(texSpriteLocation, 0)
+
+	// Back side
+	// TODO: Support eggs.
+
+	gl.ActiveTexture(digigl.CardBackTextureUnit)
+
+	var backTextureId uint32
+	gl.GenTextures(1, &backTextureId)
+	gl.BindTexture(gl.TEXTURE_2D, backTextureId)
+
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST)
+	gl.TexParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST)
+
+	texture := r.loadTexture("back1")
+	width := int32(texture.Bounds().Max.X)
+	height := int32(texture.Bounds().Max.Y)
+
+	gl.TexImage2D(gl.TEXTURE_2D, 0, gl.RGBA, width, height, 0,
+		gl.RGBA, gl.UNSIGNED_BYTE, gl.Ptr(texture.Pix))
+	gl.GenerateMipmap(gl.TEXTURE_2D)
+
+	texBackLocation := gl.GetUniformLocation(
+		r.ProgramId,
+		gl.Str("texBack\000"),
+	)
+
+	gl.Uniform1i(texBackLocation, 1)
 }
 
 func (r *CardRenderer) Configure() {
@@ -174,7 +208,7 @@ func (r *CardRenderer) loadTexture(code string) *image.RGBA {
 }
 
 // Allocates a new texture if the card hasn't been seen before or
-// simply returns the texture ID if it has
+// simply returns the texture ID if it has.
 func (r *CardRenderer) getTextureId(code string) uint32 {
 	if textureId, ok := r.CardTextures[code]; ok {
 		return textureId
@@ -226,17 +260,17 @@ func (r *CardRenderer) RenderCard(o *RenderableCard) {
 	camera := o.World.CameraMatrix()
 
 	gl.UniformMatrix4fv(
-		r.TransformUniformLocation,
-		1,
-		false,
-		&transform[0],
-	)
-
-	gl.UniformMatrix4fv(
 		r.CameraUniformLocation,
 		1,
 		false,
 		&camera[0],
+	)
+
+	gl.UniformMatrix4fv(
+		r.TransformUniformLocation,
+		1,
+		false,
+		&transform[0],
 	)
 
 	gl.DrawElements(

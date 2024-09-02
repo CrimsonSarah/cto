@@ -9,16 +9,16 @@ type CardVertexData struct {
 
 var CardVertices = CardVertexData{
 	Coords: [4]digimath.Vec3{
-		digimath.MakeVec3(-0.358, -0.5, 0),
-		digimath.MakeVec3(-0.358, 0.5, 0),
-		digimath.MakeVec3(0.358, 0.5, 0),
 		digimath.MakeVec3(0.358, -0.5, 0),
+		digimath.MakeVec3(0.358, 0.5, 0),
+		digimath.MakeVec3(-0.358, 0.5, 0),
+		digimath.MakeVec3(-0.358, -0.5, 0),
 	},
 	TexCoords: [4]digimath.Vec2{
-		digimath.MakeVec2(0, 1),
-		digimath.MakeVec2(0, 0),
-		digimath.MakeVec2(1, 0),
 		digimath.MakeVec2(1, 1),
+		digimath.MakeVec2(1, 0),
+		digimath.MakeVec2(0, 0),
+		digimath.MakeVec2(0, 1),
 	},
 }
 
