@@ -5,7 +5,7 @@ import (
 
 	"github.com/CrimsonSarah/cto/client/digidata"
 	"github.com/CrimsonSarah/cto/client/digigl"
-	"github.com/CrimsonSarah/cto/client/events"
+	"github.com/CrimsonSarah/cto/client/engine"
 	"github.com/gotk3/gotk3/gdk"
 	"github.com/gotk3/gotk3/gtk"
 )
@@ -13,42 +13,14 @@ import (
 // This package is for creating a widget on which to create a game.
 // The game itself has to be provided from somewhere else.
 
-type FrameContext struct {
-	// Time in microsseconds from start.
-	Timei int64
-	// Time in seconds from start (64 bits).
-	Timed float64
-	// Time in microsseconds from last frame.
-	Dti int64
-	// Time in seconds from last frame (64 bits).
-	Dtd float64
-	// Time in seconds from last frame (32 bits).
-	Dtf float32
-	// What frame this is.
-	Frame int64
-
-	// See https://docs.gtk.org/gtk3/input-handling.html
-	// Use type assertions to determine the event type. They will be
-	// pointers!
-	// Feel compelled to remove events once they are handled.
-	Events *digidata.Queue[interface{}]
-}
-
-type InitContext struct {
-	Width  int
-	Height int
-}
-
 type Game interface {
-	Init(InitContext)
+	Init(engine.InitContext)
 
 	// Return `false` if a redraw is NOT needed. Otherwise, return
 	// `true`.
-	Tick(FrameContext) bool
-
-	Render(area *gtk.GLArea, context *gdk.GLContext)
-
-	Configure(newWidth, newHeight int)
+	Tick(engine.EngineFrameContext) bool
+	Render(engine.EngineRenderContext)
+	AddEvent(engine.Event)
 }
 
 // Ensures that the actual Game receives convenient data to work with
@@ -59,10 +31,7 @@ type GameWrapper struct {
 	StartTime         int64
 	PreviousFrameTime int64
 
-	// Not sure if there is the need to do this manually. Stores events
-	// to make sure they are processed deterministically every frame.
-	// Use type assertions to determine the event type.
-	EventQueue digidata.Queue[interface{}]
+	EventQueue digidata.Queue[engine.Event]
 }
 
 func (w *GameWrapper) Init(area *gtk.GLArea) {
@@ -78,7 +47,7 @@ func (w *GameWrapper) Init(area *gtk.GLArea) {
 
 	digigl.DigiGLInit()
 
-	context := InitContext{
+	context := engine.InitContext{
 		Width:  area.GetAllocatedWidth(),
 		Height: area.GetAllocatedHeight(),
 	}
@@ -100,14 +69,22 @@ func (w *GameWrapper) Tick(widget *gtk.Widget, frameClock *gdk.FrameClock) bool 
 
 		w.PreviousFrameTime = currentFrameTime
 
-		frame := FrameContext{
-			Timei:  currentFrameTime,
-			Timed:  currentFrameTimeS,
-			Dti:    dt,
-			Dtd:    dtS,
-			Dtf:    float32(dtS),
-			Frame:  frameClock.GetFrameCounter(),
-			Events: &w.EventQueue,
+		frame := engine.EngineFrameContext{
+			Timei: currentFrameTime,
+			Timed: currentFrameTimeS,
+			Dti:   dt,
+			Dtd:   dtS,
+			Dtf:   float32(dtS),
+			Frame: frameClock.GetFrameCounter(),
+		}
+
+		for {
+			ev, ok := w.EventQueue.Dequeue()
+			if !ok {
+				break
+			}
+
+			w.Game.AddEvent(ev)
 		}
 
 		shouldDraw := w.Game.Tick(frame)
@@ -124,7 +101,12 @@ func (w *GameWrapper) Tick(widget *gtk.Widget, frameClock *gdk.FrameClock) bool 
 }
 
 func (w *GameWrapper) Render(area *gtk.GLArea, context *gdk.GLContext) bool {
-	w.Game.Render(area, context)
+	ctx := engine.EngineRenderContext{
+		GLArea:    area,
+		GLContext: context,
+	}
+
+	w.Game.Render(ctx)
 	return true
 }
 
@@ -154,33 +136,41 @@ func GameWidgetNew(game Game) *gtk.GLArea {
 	))
 
 	glArea.Connect("motion-notify-event", func(area *gtk.GLArea, event *gdk.Event) {
-		keyEvent := events.FromGdkPointerMotion(event)
+		keyEvent := EventFromGdkPointerMotion(event)
 		wrapper.EventQueue.Enqueue(keyEvent)
 	})
 
 	glArea.Connect("button-press-event", func(area *gtk.GLArea, event *gdk.Event) {
-		buttonEvent := events.FromGdkButtonPress(event)
+		buttonEvent := EventFromGdkButtonPress(event)
 		wrapper.EventQueue.Enqueue(buttonEvent)
 	})
 
 	glArea.Connect("button-release-event", func(area *gtk.GLArea, event *gdk.Event) {
-		buttonEvent := events.FromGdkButtonRelease(event)
+		buttonEvent := EventFromGdkButtonRelease(event)
 		wrapper.EventQueue.Enqueue(buttonEvent)
 	})
 
 	glArea.SetCanFocus(true)
 	glArea.Connect("key-press-event", func(area *gtk.GLArea, event *gdk.Event) {
-		keyEvent := events.FromGdkKeyPress(event)
+		keyEvent := EventFromGdkKeyPress(event)
 		wrapper.EventQueue.Enqueue(keyEvent)
 	})
 
 	glArea.Connect("key-release-event", func(area *gtk.GLArea, event *gdk.Event) {
-		keyEvent := events.FromGdkKeyRelease(event)
+		keyEvent := EventFromGdkKeyRelease(event)
 		wrapper.EventQueue.Enqueue(keyEvent)
 	})
 
 	glArea.Connect("resize", func(area *gtk.GLArea, width, height int) {
-		game.Configure(width, height)
+		event := engine.Event{
+			KindId: engine.ResizeEventKindId,
+			Data: engine.ResizeEvent{
+				NewWidth:  width,
+				NewHeight: height,
+			},
+		}
+
+		wrapper.EventQueue.Enqueue(event)
 	})
 
 	return glArea

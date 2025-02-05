@@ -45,6 +45,10 @@ func MakeVec3(x, y, z float32) Vec3 {
 	return Vec3([3]float32{x, y, z})
 }
 
+func Vec3From2(vec Vec2, z float32) Vec3 {
+	return MakeVec3(vec.X(), vec.Y(), z)
+}
+
 func Vec3From4(vec Vec4) Vec3 {
 	return MakeVec3(vec.X(), vec.Y(), vec.Z())
 }
@@ -112,6 +116,10 @@ func (v1 Vec3) AsPoint() Vec4 {
 
 func (v1 Vec3) AsDirection() Vec4 {
 	return MakeVec4(v1.X(), v1.Y(), v1.Z(), 0)
+}
+
+func (v1 Vec3) FixZero() Vec3 {
+	return MakeVec3(FixZero(v1.X()), FixZero(v1.Y()), FixZero(v1.Z()))
 }
 
 // Vec4
@@ -182,8 +190,17 @@ func MakeMatrix33(
 	})
 }
 
+func MakeMatrix33FromColumns(a, b, c Vec3) Matrix33 {
+	return MakeMatrix33(
+		a.X(), b.X(), c.X(),
+		a.Y(), b.Y(), c.Y(),
+		a.Z(), b.Z(), c.Z(),
+	)
+}
+
 // 1 indexed. `i` and `j` should never be less than 1.
 // There are no bound checks of course.
+// For example, (1, 1) is top left, (1, 3) is bottom left.
 func (m Matrix33) Entry(i, j uintptr) float32 {
 	return m[(j-1)*3+(i-1)]
 }
@@ -214,6 +231,15 @@ func (m Matrix33) MulV(v Vec3) Vec3 {
 		me(2),
 		me(3),
 	)
+}
+
+func (m Matrix33) Det() float32 {
+	return m.Entry(1, 1)*m.Entry(2, 2)*m.Entry(3, 3) +
+		m.Entry(2, 1)*m.Entry(3, 2)*m.Entry(1, 3) +
+		m.Entry(3, 1)*m.Entry(1, 2)*m.Entry(2, 3) -
+		m.Entry(3, 1)*m.Entry(2, 2)*m.Entry(1, 3) -
+		m.Entry(2, 1)*m.Entry(1, 2)*m.Entry(3, 3) -
+		m.Entry(1, 1)*m.Entry(3, 2)*m.Entry(2, 3)
 }
 
 func Matrix33Id() Matrix33 {
@@ -262,6 +288,36 @@ func Matrix33RotateX(amount float32) Matrix33 {
 		1, 0, 0,
 		0, cos, -sin,
 		0, sin, cos,
+	)
+}
+
+func Matrix33Rotate(r Vec3) Matrix33 {
+	cos := func(x float32) float32 { return float32(math.Cos(float64(x))) }
+	sin := func(x float32) float32 { return float32(math.Sin(float64(x))) }
+
+	cosx := cos(r.X())
+	cosy := cos(r.Y())
+	cosz := cos(r.Z())
+	sinx := sin(r.X())
+	siny := sin(r.Y())
+	sinz := sin(r.Z())
+
+	e11 := (cosz * cosy)
+	e12 := (cosz*siny*sinx - sinz*cosx)
+	e13 := (cosz*siny*cosx + sinz*sinx)
+
+	e21 := (sinz * cosy)
+	e22 := (sinz*siny*sinx + cosz*cosx)
+	e23 := (sinz*siny*cosx - cosz*sinx)
+
+	e31 := (-siny)
+	e32 := (cosy * sinx)
+	e33 := (cosy * cosx)
+
+	return MakeMatrix33(
+		e11, e12, e13,
+		e21, e22, e23,
+		e31, e32, e33,
 	)
 }
 
@@ -486,6 +542,37 @@ func Matrix44RotateX(amount float32) Matrix44 {
 		1, 0, 0, 0,
 		0, cos, -sin, 0,
 		0, sin, cos, 0,
+		0, 0, 0, 1,
+	)
+}
+
+func Matrix44Rotate3(r Vec3) Matrix44 {
+	cos := func(x float32) float32 { return float32(math.Cos(float64(x))) }
+	sin := func(x float32) float32 { return float32(math.Sin(float64(x))) }
+
+	cosx := cos(r.X())
+	cosy := cos(r.Y())
+	cosz := cos(r.Z())
+	sinx := sin(r.X())
+	siny := sin(r.Y())
+	sinz := sin(r.Z())
+
+	e11 := (cosz * cosy)
+	e12 := (cosz*siny*sinx - sinz*cosx)
+	e13 := (cosz*siny*cosx + sinz*sinx)
+
+	e21 := (sinz * cosy)
+	e22 := (sinz*siny*sinx + cosz*cosx)
+	e23 := (sinz*siny*cosx - cosz*sinx)
+
+	e31 := (-siny)
+	e32 := (cosy * sinx)
+	e33 := (cosy * cosx)
+
+	return MakeMatrix44(
+		e11, e12, e13, 0,
+		e21, e22, e23, 0,
+		e31, e32, e33, 0,
 		0, 0, 0, 1,
 	)
 }

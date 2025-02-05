@@ -100,7 +100,7 @@ func Intersects[T WorldObject](
 	ray1 = aremac.MulV(ray1)
 
 	// Unnormalized. Don't think it's important here.
-	line := digimath.MakeLine(
+	line := digimath.MakeRay(
 		digimath.Vec3From4(ray0), digimath.Vec3From4(ray1.Sub(ray0)),
 	)
 
@@ -112,7 +112,7 @@ func Intersects[T WorldObject](
 	d := -normal.Dot(obj.Transform.Position)
 
 	plane := digimath.MakePlane(normal, d)
-	intersects, p2 := digimath.IntersectLinePlane(line, plane)
+	intersects, p2 := digimath.IntersectRayPlane(line, plane)
 
 	if !intersects {
 		return false

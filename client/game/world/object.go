@@ -176,7 +176,7 @@ func (t *Transform) Format() string {
 		""+
 			"Scale:\n%f\n\n"+
 			"Rotation:\n%v\n\n"+
-			"Translation:\nvs",
+			"Translation:\n%v\n",
 		t.ScaleFactor,
 		t.Rotation,
 		t.Position,

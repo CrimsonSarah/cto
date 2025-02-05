@@ -6,8 +6,8 @@ import "os"
 // paths.
 type ResPath string
 
-// Turns a relative resource path like "shaders/cards/frag.glsl" into the
-// file path where that is supposed to be.
+// Turns a relative resource path like "shaders/cards/frag.glsl" into
+// the file path where that is supposed to be.
 func GameFilePath(path ResPath) string {
 	// TODO: Prepend the installation path somehow.
 	// Currently resource files will be looked for in the CWD

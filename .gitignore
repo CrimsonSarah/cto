@@ -1,2 +1,4 @@
 # Download this if needed
 client/resources/textures/cards/*.jpg
+
+__debug_bin*

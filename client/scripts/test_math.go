@@ -14,10 +14,11 @@ import (
 func main() {
 	// TestProj()
 	// TestInverses()
-	// TestTransform()
+	TestTransform()
 	// TestProjInverses()
 	// TestTransformInverses()
-	TestPlanes()
+	// TestPlanes()
+	// TestParallelogram2()
 }
 
 // Kind of emulates the vertex buffer
@@ -139,23 +140,25 @@ func TestTransform() {
 	fmt.Println("")
 	fmt.Println("# Test3")
 
-	s1 := float32(1)
+	// s1 := float32(1)
 	p1 := digimath.MakeVec3(1, 2, 3)
-	r1 := digimath.MakeVec3(math.Pi/2, math.Pi/2, 0)
+	// r1 := digimath.MakeVec3(math.Pi/2, math.Pi/2, 0)
 
 	t1 := world.MakeTransform()
-	t1.ScaleFactor = s1
+	// t1.ScaleFactor = s1
+	t1.ScaleFactor = 1
 	t1.Position = p1
-	t1.Rotation = r1
+	// t1.Rotation = r1
+	t1.Rotation = digimath.Vec3Zero
 
 	mat1 := t1.ToMatrix()
 
 	mat2 := digimath.Matrix44Id()
-	mat2 = digimath.Matrix44RotateZ(r1.Z()).Mul(mat2)
-	mat2 = digimath.Matrix44RotateY(r1.Y()).Mul(mat2)
-	mat2 = digimath.Matrix44RotateX(r1.X()).Mul(mat2)
+	// mat2 = digimath.Matrix44RotateZ(r1.Z()).Mul(mat2)
+	// mat2 = digimath.Matrix44RotateY(r1.Y()).Mul(mat2)
+	// mat2 = digimath.Matrix44RotateX(r1.X()).Mul(mat2)
 	mat2 = digimath.Matrix44Translate(p1).Mul(mat2)
-	mat2 = digimath.Matrix44Scale(s1).Mul(mat2)
+	// mat2 = digimath.Matrix44Scale(s1).Mul(mat2)
 
 	fmt.Printf("Mat1\n%s\n", mat1.Format())
 	fmt.Printf("Mat2\n%s\n", mat2.Format())
@@ -164,6 +167,11 @@ func TestTransform() {
 
 	fmt.Printf("Mat1 * V1\n%v\n", mat1.MulV(v1))
 	fmt.Printf("Mat2 * V1\n%v\n", mat2.MulV(v1))
+
+	v2 := digimath.MakeVec4(1, 1, 1, 1)
+
+	fmt.Printf("Mat1 * V2\n%v\n", mat1.MulV(v2))
+	fmt.Printf("Mat2 * V2\n%v\n", mat2.MulV(v2))
 }
 
 func TestProjInverses() {
@@ -214,14 +222,14 @@ func TestTransformInverses() {
 }
 
 func TestPlanes() {
-	// line1 := digimath.MakeLine(digimath.MakeVec3(0, 0, 0), digimath.MakeVec3(0, 0, 1))
+	// line1 := digimath.MakeRay(digimath.MakeVec3(0, 0, 0), digimath.MakeVec3(0, 0, 1))
 	plane1 := digimath.MakePlane(
 		digimath.MakeVec3(
 			0,
 			0,
 			1,
 		),
-		2,
+		-2,
 	)
 
 	// p0 := digimath.MakeVec3(0, 0, 1)
@@ -236,13 +244,63 @@ func TestPlanes() {
 	// 	plane1.Dot(p2.AsPoint()),
 	// )
 
-	line1 := digimath.MakeLine(
-		digimath.MakeVec3(0, 0, 10),
-		digimath.MakeVec3(0.0001, 0, 20),
+	line1 := digimath.MakeRay(
+		digimath.MakeVec3(0, 0, 0),
+		digimath.MakeVec3(0, 0.7, 0.7),
 	)
-	_, p1p := digimath.IntersectLinePlane(line1, plane1)
+	ok, p1p := digimath.IntersectRayPlane(line1, plane1)
 
-	fmt.Printf("p1p: %f.\n",
-		p1p,
+	fmt.Printf("p1p: %f (%t).\n",
+		p1p, ok,
+	)
+}
+
+func TestParallelogram1() {
+	// Based on <https://stackoverflow.com/a/1218538>
+
+	rect1 := digimath.MakeRect(
+		digimath.MakeVec3(0, 0, 0),
+		digimath.MakeVec3(3, 1, 2),
+		digimath.MakeVec3(1, 2, 2),
+	)
+
+	p := digimath.MakeVec3(4.9, 4, 4)
+	u := rect1.Side1
+	v := rect1.Side2
+
+	fmt.Printf("bl(%v) u(%v) v(%v)  p(%v).\n",
+		rect1.BottomLeft, u, v, p,
+	)
+
+	defaultZ := digimath.MakeVec3(0, 0, 1)
+	det := digimath.MakeMatrix33FromColumns(u, v, defaultZ).Det()
+
+	m := -digimath.MakeMatrix33FromColumns(p, u, defaultZ).Det() / det
+	n := digimath.MakeMatrix33FromColumns(p, v, defaultZ).Det() / det
+
+	fmt.Printf("det(%f): m(%f) n(%f).\n",
+		det, m, n,
+	)
+
+	// It seems (nu + mv = p), except for the Z component...
+}
+
+func TestParallelogram2() {
+	rect1 := digimath.MakeRect(
+		digimath.MakeVec3(0, 0, 0),
+		digimath.MakeVec3(3, 1, 2),
+		digimath.MakeVec3(1, 2, 2),
+	)
+
+	p := digimath.MakeVec3(3, 1, 2)
+
+	u := p.Dot(rect1.Side1)
+	v := p.Dot(rect1.Side2)
+
+	maxU := rect1.Side1.MagnitudeSquared()
+	maxV := rect1.Side2.MagnitudeSquared()
+
+	fmt.Printf("p(%v): u(%f/%f) v(%f/%f).\n",
+		p, u, maxU, v, maxV,
 	)
 }

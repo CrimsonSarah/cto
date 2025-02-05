@@ -1,6 +1,6 @@
 package digidata
 
-const QUEUE_SIZE byte = 5
+const QUEUE_SIZE byte = 20
 
 // Fixed-size using a circular buffer.
 // Keeps track of size and drops Enqueues after it is full.

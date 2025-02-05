@@ -4,16 +4,22 @@ import (
 	"github.com/go-gl/gl/v3.3-core/gl"
 )
 
-var SpriteTextureUnit uint32
-var CardBackTextureUnit uint32
+type TextureUnit uint32
+
+var SpriteTextureUnit TextureUnit
+var CardBackTextureUnit TextureUnit
 
 // Should be called once OpenGL is initialized
 func TextureInit() {
 	var offset = 0
 
-	SpriteTextureUnit = uint32(gl.TEXTURE0 + offset)
+	SpriteTextureUnit = TextureUnit(gl.TEXTURE0 + offset)
 	offset += 1
 
-	CardBackTextureUnit = uint32(gl.TEXTURE0 + offset)
+	CardBackTextureUnit = TextureUnit(gl.TEXTURE0 + offset)
 	// offset += 1
+}
+
+func (u TextureUnit) GL() uint32 {
+	return uint32(u)
 }
